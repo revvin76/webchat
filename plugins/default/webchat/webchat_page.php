@@ -1,7 +1,8 @@
 <?php
 $chatUser = ossn_loggedin_user();
 //******************* This section contains static variables *******************//
-$apiKey = ossn_services_apikey();
+//$apiKey = ossn_services_apikey();
+$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
 $site_url = ossn_site_url('api/v1.0/');
 $recentURL = $site_url . "message_recent?";
 $listURL = $site_url . "message_list?";
