@@ -53,28 +53,29 @@ function checkStatus($guidToCheck) {
 	return false;
 }	
 
-if (($_POST['action'] !== null) && ($_POST['action'] == 'send')) {
-    $from = filter_var($_POST['from'], FILTER_SANITIZE_NUMBER_INT);
-    $to = filter_var($_POST['to'], FILTER_SANITIZE_NUMBER_INT);
-    $message = filter_var($_POST['message'], FILTER_SANITIZE_STRING);
+if ((input('action') !== null) && (input('action') == 'send')) {
+    $from = filter_var(input('from'), FILTER_SANITIZE_NUMBER_INT);
+    $to = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
+    $message = filter_var(input('message'), FILTER_SANITIZE_STRING);
 	
 	$addPARAM = array( 'api_key_token' => $apiKey , 'from' => $from,'to' => $to, 'message' => $message);
 	$addMessage = CallAPI ($addURL , $addPARAM);
 	return $addMessage;
 }
 
-if (($_POST['action'] !== null) && ($_POST['action'] == 'messages')) {
-  	$with = filter_var($_POST['to'], FILTER_SANITIZE_NUMBER_INT);
-	$userPARAM = array( 'api_key_token' => $apiKey , 'guid' =>  $with);
+if ((input('action') !== null) && (input('action') == 'messages')) {
+  	$with = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
+/* 	$userPARAM = array( 'api_key_token' => $apiKey , 'guid' =>  $with);
 	$user2 = CallAPI ($userURL , $userPARAM);
-	
- 	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->payload->guid, 'markallread' => 1);
+ */	$user2 = ossn_user_by_guid($with);
+ 	
+	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->guid, 'markallread' => 1);
 	$listMessages = CallAPI ($listURL , $listPARAM); 
 
 	echo ('
 		<div class="contact-profile">
-			<img src="' . $user2->payload->icon->small . '" alt="' . $user2->payload->fullname . '" />
-			<p>' . $user2->payload->first_name . '</p>
+			<img src="' . $user2->iconURL()->smaller . '" alt="' . $user2->fullname . '" />
+			<p>' . $user2->first_name . '</p>
 			<!--<div class="social-media">
 				<i class="fa fa-facebook" aria-hidden="true"></i>
 				<i class="fa fa-twitter" aria-hidden="true"></i>
@@ -83,7 +84,7 @@ if (($_POST['action'] !== null) && ($_POST['action'] == 'messages')) {
 		</div>
 		<div class="messages">
 			<ul>');
-			
+				if ($listMessages) {
 					foreach($listMessages->payload->list as $message)
 					{
 						if ($message->message_from->guid == ossn_loggedin_user()->guid) {
@@ -92,16 +93,17 @@ if (($_POST['action'] !== null) && ($_POST['action'] == 'messages')) {
 							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						} else {
 							echo  '<li class="replies">';
-							echo  '<img src="' . $user2->payload->icon->small . '" alt="" />';
+							echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
 							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						}
 						$data .= '</li>';
 					};
+				}
 		echo  ('	</ul>
 		</div>');
 }
 
-if (($_POST['action'] !== null) && ($_POST['action'] == 'recent')) {
+if ((input('action') !== null) && (input('action') == 'recent')) {
 	$recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
 	$recentMessages = CallAPI ($recentURL , $recentPARAM);
 
@@ -117,7 +119,7 @@ if (($_POST['action'] !== null) && ($_POST['action'] == 'recent')) {
 							$withguid = $messageThread->message_to->guid;						
 						}
 						echo '<li class="contact';
-						if ($withguid == $_POST['active']) echo " active";
+						if ($withguid == input('active')) echo " active";
 						echo '" id="'. $withguid .'">
 							<div class="wrap">		
 								<span class="contact-status ' . checkStatus($withguid) . '"></span>';
@@ -152,14 +154,14 @@ if (($_POST['action'] !== null) && ($_POST['action'] == 'recent')) {
 				</ul>";
 }
 
-if (($_POST['action'] !== null) && ($_POST['action'] == 'notifs')) {
-    $guid = filter_var($_POST['guid'], FILTER_SANITIZE_NUMBER_INT);	
+if ((input('action') !== null) && (input('action') == 'notifs')) {
+    $guid = filter_var(input('guid'), FILTER_SANITIZE_NUMBER_INT);	
 	
     /* Get the live notification counts */
 	$notifcountPARAM = array( 'api_key_token' => $apiKey , 'guid' => $guid);
 	$notifcount = CallAPI ($notifcountURL , $notifcountPARAM);
 	
-	$notifs = $_POST['notifs'];
+	$notifs = input('notifs');
 	
 	// Check whether the stored notifications count match the live notifications count
 	if ( $notifcount->payload === $notifs->payload || $notifcount->payload === false) {
@@ -173,7 +175,7 @@ if (($_POST['action'] !== null) && ($_POST['action'] == 'notifs')) {
 	} else {
 		// We know there has been a change, we just need to determine if it was from the user currently chatting
 		$current_chat = false;
-		$current_guid = $_POST['currentuser'];
+		$current_guid = input('currentuser');
 		
  		foreach ( $notifcount->payload as $live_count ) {
 			if ( $current_guid == $live_count->message_from) {

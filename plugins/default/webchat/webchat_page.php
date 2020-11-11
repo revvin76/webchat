@@ -57,6 +57,10 @@ file_put_contents ("api_log.txt","webchat_page.php : SITE URL : " . $siteURL . P
 $recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
 $recentMessages = CallAPI ($recentURL , $recentPARAM);
 
+/* Capture the friends list */
+$friends = ossn_loggedin_user()->getFriends();
+
+	
 if ($recentMessages) {
 	if ( $recentMessages->payload->list[0]->message_to->guid == ossn_loggedin_user()->guid ) {
 		$with = $recentMessages->payload->list[0]->message_from->guid;
@@ -75,9 +79,7 @@ if ($recentMessages) {
 	/* Store the current notification counts */
 	$notifcountPARAM = array( 'api_key_token' => $apiKey , 'guid' => $chatUser->guid);
 	$notifcount = CallAPI ($notifcountURL , $notifcountPARAM);
-	
-	/* Print them out for debugging */
-	//echo (print_r(json_encode($notifcount->payload),true));
+
 }
 
 ?>
@@ -107,6 +109,7 @@ if ($recentMessages) {
 			<ul>
 				<?php 
 				$i = 0;
+				$activeFriends = [];
 				foreach($recentMessages->payload->list as $messageThread)
 					{
 						if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
@@ -133,8 +136,24 @@ if ($recentMessages) {
 								</div>
 							</div>
 						</li>';
+						$activeFriends[] = $withguid;
 						$i++;
 					};
+				foreach ($friends as $friend) {
+					if (!in_array($friend->guid,$activeFriends)) {
+						echo '<li class="contact';
+						echo '" id="'. $friend->guid .'">
+							<div class="wrap">		
+								<span class="contact-status ' . checkStatus($friend->guid) . '"></span>';
+						echo '<img src="' . $friend->iconURL()->smaller . '" alt="" />
+								<div class="meta">
+									<p class="name">' . $friend->username . '</p>
+									<p class="preview">' . $friend->message . '</p>
+								</div>
+							</div>
+						</li>';
+					}
+				}
 				?>
 				<script>
 				$(function() {
@@ -168,18 +187,20 @@ if ($recentMessages) {
 		<div class="messages">
 			<ul>
 				<?php
-					foreach($listMessages->payload->list as $message)
-					{
-						if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-							echo '<li class="sent">';						
-							echo '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-							echo '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
-						} else {
-							echo '<li class="replies">';
-							echo '<img src="' . $user2->payload->icon->small . '" alt="" />';
-							echo '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+					if ($listMessages) {
+						foreach($listMessages->payload->list as $message)
+						{
+							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
+								echo '<li class="sent">';						
+								echo '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
+								echo '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							} else {
+								echo '<li class="replies">';
+								echo '<img src="' . $user2->payload->icon->small . '" alt="" />';
+								echo '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							}
+							echo '</li>';
 						}
-						echo '</li>';
 					};?>								
 			</ul>
 		</div>
