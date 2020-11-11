@@ -1,13 +1,11 @@
 <?php
 $chatUser = ossn_loggedin_user();
 //******************* This section contains static variables *******************//
-//$apiKey = ossn_services_apikey();
 $apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
-$site_url = ossn_site_url('api/v1.0/');
-$recentURL = $site_url . "message_recent?";
-$listURL = $site_url . "message_list?";
-$userURL = $site_url . "user_details?";
-$notifcountURL = $site_url . "unread_mesages_count_custom?";
+$recentURL = "http://10.48.1.28/api/v1.0/message_recent?";
+$listURL = "http://10.48.1.28/api/v1.0/message_list?";
+$userURL = "http://10.48.1.28/api/v1.0/user_details?";
+$notifcountURL = "http://10.48.1.28/api/v1.0/unread_mesages_count_custom?";
 //* api_key_token=<token>&guid=<user guid> *//
 //******************************************************************************//
 function elapsed_time($timestamp, $precision = 1) {

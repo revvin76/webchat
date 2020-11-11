@@ -1,7 +1,6 @@
 <?php
 $apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
-//$apiKey = ossn_services_apikey();
-$site_url = ossn_site_url('api/v1.0/');
+$siteURL = "http://10.48.1.28/api/v1.0/";
 $addURL = $siteURL."message_add?";
 $listURL = $siteURL."message_list?";
 $userURL = $siteURL."user_details?";
