@@ -1,6 +1,8 @@
 <?php
-$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
-$siteURL = "http://10.48.1.28/api/v1.0/";
+$apiKey = ossn_services_apikey();
+//$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
+//$siteURL = "http://10.48.1.28/api/v1.0/";
+$siteURL = ossn_site_url() . 'api/v1.0/';
 $addURL = $siteURL."message_add?";
 $listURL = $siteURL."message_list?";
 $userURL = $siteURL."user_details?";
@@ -17,9 +19,10 @@ function CallAPI ($url,$post) {
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	$result = curl_exec($ch);
 	curl_close($ch);
-/* 	file_put_contents ("api_log.txt","API called with ".print_r($_POST,true).'<br>',FILE_APPEND);
-	file_put_contents ("api_log.txt","URL ".print_r($url,true).print_r($post,true).'<br>',FILE_APPEND);	
-	file_put_contents ("api_log.txt","API results: ".print_r(json_decode($result),true).'<br>',FILE_APPEND); */
+ 	// file_put_contents ("api_log.txt","API called with " . print_r($_POST,true) . '\n\r',FILE_APPEND);
+	// file_put_contents ("api_log.txt","chat_api.php : API KEY : " . $apiKey . PHP_EOL,FILE_APPEND);	
+	// file_put_contents ("api_log.txt","chat_api.php : SITE URL : " . $siteURL . PHP_EOL,FILE_APPEND);	
+	// file_put_contents ("api_log.txt","API results: ".print_r(json_decode($result),true).'\n\r',FILE_APPEND); 
 	return json_decode($result);
 }
 function elapsed_time($timestamp, $precision = 1) {

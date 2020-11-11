@@ -1,11 +1,15 @@
 <?php
 $chatUser = ossn_loggedin_user();
 //******************* This section contains static variables *******************//
-$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
-$recentURL = "http://10.48.1.28/api/v1.0/message_recent?";
-$listURL = "http://10.48.1.28/api/v1.0/message_list?";
-$userURL = "http://10.48.1.28/api/v1.0/user_details?";
-$notifcountURL = "http://10.48.1.28/api/v1.0/unread_mesages_count_custom?";
+$apiKey = ossn_services_apikey();
+//$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
+$siteURL = ossn_site_url() . 'api/v1.0/';
+$addURL = $siteURL."message_add?";
+$listURL = $siteURL."message_list?";
+$userURL = $siteURL."user_details?";
+$notifsURL = $siteURL."notifications_count?";
+$notifcountURL = $siteURL."unread_mesages_count_custom?";
+$recentURL = $siteURL."message_recent?";
 //* api_key_token=<token>&guid=<user guid> *//
 //******************************************************************************//
 function elapsed_time($timestamp, $precision = 1) {
@@ -44,6 +48,10 @@ function checkStatus($guidToCheck) {
 	}
 	return false;
 }	
+
+// Debug: Save the API key variable to a log file.
+/* file_put_contents ("api_log.txt","webchat_page.php : API KEY : " . $apiKey . PHP_EOL,FILE_APPEND);	
+file_put_contents ("api_log.txt","webchat_page.php : SITE URL : " . $siteURL . PHP_EOL,FILE_APPEND); */	
 
 /* Get the list of message threads */
 $recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
@@ -317,7 +325,7 @@ setInterval(function() {
 		running = true;
 		checkNotifs();
 	}
-}, 1000); 
+}, 3000); 
 
 // Click the SEND button
 $('.submit').click(function() {
