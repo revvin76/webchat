@@ -30,7 +30,7 @@ if (isset($params['contents'])) {
     <link rel="icon" href="<?php echo ossn_add_cache_to_url(ossn_theme_url().'images/favicon.ico');?>" type="image/x-icon" />
 	<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
 	<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
-	<link rel="stylesheet" href="<?php ossn_site_url( $extend = '' , $action = false );?>/components/WebChat/plugins/default/css/custom.css" type='text/css'>
+	<link rel="stylesheet" href="<?php echo ossn_site_url();?>components/WebChat/plugins/default/css/custom.css" type='text/css'>
 	<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
 	<script src="https://use.typekit.net/hoy3lrg.js"></script>
 	<script>try{Typekit.load({ async: true });}catch(e){}</script>	
