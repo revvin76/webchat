@@ -88,29 +88,31 @@ if ($recentMessages) {
 <div id="frame">
 	<div id="sidepanel">
 		<div id="profile">
-			<div class="wrap">
-				<img id="profile-img" src="<?php echo ossn_loggedin_user()->iconURLS->small; ?>" class="online" alt="" />
-				<p><?php echo $chatUser->fullname; ?></p>
-				<!--<div id="status-options">
+			<!--<div class="wrap">-->
+			<a href="/home" class="button"><i class="fa fa-home fa-fw" aria-hidden="true"></i> <span>Home</span></a>
+				<!--<img id="profile-img" src="<?php //echo ossn_loggedin_user()->iconURLS->small; ?>" class="online" alt="" />
+				<p><?php //echo $chatUser->fullname; ?></p>
+				<div id="status-options">
 					<ul>
 						<li id="status-online" class="active"><span class="status-circle"></span> <p>Online</p></li>
 						<li id="status-away"><span class="status-circle"></span> <p>Away</p></li>
 						<li id="status-busy"><span class="status-circle"></span> <p>Busy</p></li>
 						<li id="status-offline"><span class="status-circle"></span> <p>Offline</p></li>
 					</ul>
-				</div>-->
-			</div>
+				</div>
+			</div>-->
 		</div>
-		<div id="search">
+ 		<!--<div id="search">
 			<label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
 			<input type="text" placeholder="Search contacts..." />
-		</div>
+		</div> -->
 		<div id="contacts">
 			<ul>
 				<?php 
 				$i = 0;
 				$activeFriends = [];
-				foreach($recentMessages->payload->list as $messageThread)
+				if ($recentMessages->payload->count > 0) {
+					foreach($recentMessages->payload->list as $messageThread)
 					{
 						if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
 							$current_message = $messageThread->message_from;
@@ -138,20 +140,23 @@ if ($recentMessages) {
 						</li>';
 						$activeFriends[] = $withguid;
 						$i++;
-					};
-				foreach ($friends as $friend) {
-					if (!in_array($friend->guid,$activeFriends)) {
-						echo '<li class="contact';
-						echo '" id="'. $friend->guid .'">
-							<div class="wrap">		
-								<span class="contact-status ' . checkStatus($friend->guid) . '"></span>';
-						echo '<img src="' . $friend->iconURL()->smaller . '" alt="" />
-								<div class="meta">
-									<p class="name">' . $friend->username . '</p>
-									<p class="preview">' . $friend->message . '</p>
+					}
+				};
+				if ($friends) {
+					foreach ($friends as $friend) {
+						if (!in_array($friend->guid,$activeFriends)) {
+							echo '<li class="contact';
+							echo '" id="'. $friend->guid .'">
+								<div class="wrap">		
+									<span class="contact-status ' . checkStatus($friend->guid) . '"></span>';
+							echo '<img src="' . $friend->iconURL()->smaller . '" alt="" />
+									<div class="meta">
+										<p class="name">' . $friend->username . '</p>
+										<p class="preview">' . $friend->message . '</p>
+									</div>
 								</div>
-							</div>
-						</li>';
+							</li>';
+						}
 					}
 				}
 				?>
@@ -187,7 +192,7 @@ if ($recentMessages) {
 		<div class="messages">
 			<ul>
 				<?php
-					if ($listMessages) {
+					if ($listMessages->payload->count > 0) {
 						foreach($listMessages->payload->list as $message)
 						{
 							if ($message->message_from->guid == ossn_loggedin_user()->guid) {

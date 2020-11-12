@@ -84,15 +84,16 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 		</div>
 		<div class="messages">
 			<ul>');
-				if ($listMessages) {
+				if ($listMessages->payload->count > 0) {
 					foreach($listMessages->payload->list as $message)
 					{
 						if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-							echo  '<li class="sent">';						
+							// echo (print_r($message,true));
+							echo  '<li class="sent" data-id="' . $message->id . '">';						
 							echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
 							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						} else {
-							echo  '<li class="replies">';
+							echo  '<li class="replies" data-id="' . $message->id . '">';
 							echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
 							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						}
@@ -108,50 +109,52 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 	$recentMessages = CallAPI ($recentURL , $recentPARAM);
 
 	echo '	<ul>';	
-				$i = 0;
-				foreach($recentMessages->payload->list as $messageThread)
-					{
-						if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
-							$current_message = $messageThread->message_from;
-							$withguid = $messageThread->message_from->guid;
-						} else {
-							$current_message = $messageThread->message_to;
-							$withguid = $messageThread->message_to->guid;						
-						}
-						echo '<li class="contact';
-						if ($withguid == input('active')) echo " active";
-						echo '" id="'. $withguid .'">
-							<div class="wrap">		
-								<span class="contact-status ' . checkStatus($withguid) . '"></span>';
-								
-								if ($messageThread->viewed == 0) {
-									echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
-								}
-								
-						echo '<img src="' . $current_message->icon->small . '" alt="" />
-								<div class="meta">
-									<p class="name">' . $current_message->username . '</p>
-									<p class="preview">' . $current_message->message . '</p>
-								</div>
+	if ($recentMessages->payload->count > 0) {
+			$i = 0;
+			foreach($recentMessages->payload->list as $messageThread)
+				{
+					if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
+						$current_message = $messageThread->message_from;
+						$withguid = $messageThread->message_from->guid;
+					} else {
+						$current_message = $messageThread->message_to;
+						$withguid = $messageThread->message_to->guid;						
+					}
+					echo '<li class="contact';
+					if ($withguid == input('active')) echo " active";
+					echo '" id="'. $withguid .'">
+						<div class="wrap">		
+							<span class="contact-status ' . checkStatus($withguid) . '"></span>';
+							
+							if ($messageThread->viewed == 0) {
+								echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
+							}
+							
+					echo '<img src="' . $current_message->icon->small . '" alt="" />
+							<div class="meta">
+								<p class="name">' . $current_message->username . '</p>
+								<p class="preview">' . $current_message->message . '</p>
 							</div>
-						</li>';
-						$i++;
-					};
-					
-					
-				echo "	<script>
-				$(function() {
-					$('li.contact').click(function() {
-					  $('li.contact').removeClass('active');
-					  $(this).find('.contact-new').remove();
-					  $(this).addClass('active');
-					  withguid = $(this).attr('id');
-					  updateActive(withguid);
-					  listMessages(withguid);
-					});
-				});	
-				</script>	
-				</ul>";
+						</div>
+					</li>';
+					$i++;
+				};
+				
+				
+			echo "	<script>
+			$(function() {
+				$('li.contact').click(function() {
+				  $('li.contact').removeClass('active');
+				  $(this).find('.contact-new').remove();
+				  $(this).addClass('active');
+				  withguid = $(this).attr('id');
+				  updateActive(withguid);
+				  listMessages(withguid);
+				});
+			});	
+			</script>";
+	}
+	echo "</ul>";
 }
 
 if ((input('action') !== null) && (input('action') == 'notifs')) {
