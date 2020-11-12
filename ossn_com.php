@@ -20,14 +20,10 @@ function unread_mesages_count_api_custom($hook, $type, $methods, $params) {
 		$methods['v1.0'][] = 'unread_mesages_count_custom';
 		return $methods;
 }
-ossn_register_callback('ossn', 'init', 'unread_messages_count_api');
-
 //this section initilises webchat
 function web_chat() {
-   ossn_register_page('webchat', 'webchat_template_page');
-   ossn_register_page('chat_api', 'chat_api');
-   
-   if(ossn_isLoggedin()) {
+		ossn_register_page('webchat', 'webchat_template_page');
+		ossn_register_page('chat_api', 'chat_api');
 		$icon          = ossn_site_url('components/OssnMessages/images/messages.png');
 		ossn_register_sections_menu('newsfeed', array(
 				'name' => 'webchat',
@@ -36,7 +32,6 @@ function web_chat() {
 				'parent' => 'links',
 				'icon' => $icon
 		));
-	}
 }
 function webchat_template_page(){
     	$content = ossn_plugin_view('webchat/webchat_page');
@@ -48,5 +43,14 @@ function chat_api(){
 		$title = 'Chat_API';
     	echo ossn_view_page($title, $content, 'chat_api_template');	
 }
-ossn_register_callback('ossn', 'init', 'web_chat');
 
+if(ossn_isLoggedin()) {
+	ossn_register_callback('ossn', 'init', 'unread_messages_count_api');
+	ossn_register_callback('ossn', 'init', 'web_chat');
+} else {
+	
+	if (strtolower($_SERVER['REQUEST_URI']) == "/webchat") {
+		echo ("<script>alert ('-".$_SERVER['REQUEST_URI']."-');</script>");
+		header("Location: /login");
+	}
+}
