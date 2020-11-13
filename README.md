@@ -2,18 +2,17 @@ Web Chat
 ========
 
 Web Chat component for OSSN (Open Source Social Network)
+Tested in OSSN 5.6 with GoBlue theme.
 
-V1.0
-* First release - very much an early work in progress
+Currently you can send and receive messages to people, and see notifications when new messages arrive.
 
-Tested in OSSN 5.5 with GoBlue theme.
+No other functionality yet implemented.
 
-The zip name must be WebChat.zip and after extracting it must have a root folder named WebChat containing ossn_com.php
 
-You must add the following lines to your "Private Network" exclusions to allow this component to work correctly:
+If you are using the Private Network component, you must add the following lines to the "Allowed Pages" array in "PrivateNetwork.php" which can be found in the classes folder of the Private Network component.
 
 							'api',
 							'webchat',
 							'chat_api',
 							
-This needs to be added to the "Allowed Pages" array in "PrivateNetwork.php" which can be found in the classes folder of the Private Network component.							
+						
