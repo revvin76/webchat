@@ -12,5 +12,9 @@
 $en = array(
 	'webchat' => 'Web Chat',
     'com:webchat:menu' => 'Web Chat',
+    'com:webchat:homebutton' => 'Home',
+    'com:webchat:input:placeholder' => 'Type a message',
+    'com:webchat:menu:settings' => 'Settings',
+    'com:webchat:menu:addcontact' => 'Add contact'
 );
 ossn_register_languages('en', $en); 

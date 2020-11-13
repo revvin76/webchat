@@ -2,7 +2,7 @@
 $apiKey = ossn_services_apikey();
 //$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
 //$siteURL = "http://10.48.1.28/api/v1.0/";
-$siteURL = ossn_site_url() . 'api/v1.0/';
+$siteURL = ossn_site_url('api/v1.0/');
 $addURL = $siteURL."message_add?";
 $listURL = $siteURL."message_list?";
 $userURL = $siteURL."user_details?";
@@ -19,10 +19,7 @@ function CallAPI ($url,$post) {
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	$result = curl_exec($ch);
 	curl_close($ch);
- 	// file_put_contents ("api_log.txt","API called with " . print_r($_POST,true) . '\n\r',FILE_APPEND);
-	// file_put_contents ("api_log.txt","chat_api.php : API KEY : " . $apiKey . PHP_EOL,FILE_APPEND);	
-	// file_put_contents ("api_log.txt","chat_api.php : SITE URL : " . $siteURL . PHP_EOL,FILE_APPEND);	
-	// file_put_contents ("api_log.txt","API results: ".print_r(json_decode($result),true).'\n\r',FILE_APPEND); 
+	//error_log('API --> CallAPI() [chat_api.php:line 20]: ' . PHP_EOL . $result . PHP_EOL);
 	return json_decode($result);
 }
 function elapsed_time($timestamp, $precision = 1) {
@@ -65,12 +62,11 @@ if ((input('action') !== null) && (input('action') == 'send')) {
 
 if ((input('action') !== null) && (input('action') == 'messages')) {
   	$with = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
-/* 	$userPARAM = array( 'api_key_token' => $apiKey , 'guid' =>  $with);
-	$user2 = CallAPI ($userURL , $userPARAM);
- */	$user2 = ossn_user_by_guid($with);
+	$user2 = ossn_user_by_guid($with);
  	
 	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->guid, 'markallread' => 1);
 	$listMessages = CallAPI ($listURL , $listPARAM); 
+	//error_log('CallAPI() --> $listMessages [chat_api.php:line 68] : ' . PHP_EOL . $result . PHP_EOL );
 
 	echo ('
 		<div class="contact-profile">

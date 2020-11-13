@@ -3,7 +3,7 @@ $chatUser = ossn_loggedin_user();
 //******************* This section contains static variables *******************//
 $apiKey = ossn_services_apikey();
 //$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
-$siteURL = ossn_site_url() . 'api/v1.0/';
+$siteURL = ossn_site_url('api/v1.0/');
 $addURL = $siteURL."message_add?";
 $listURL = $siteURL."message_list?";
 $userURL = $siteURL."user_details?";
@@ -89,7 +89,7 @@ if ($recentMessages) {
 	<div id="sidepanel">
 		<div id="profile">
 			<!--<div class="wrap">-->
-			<a href="/home" class="button"><i class="fa fa-home fa-fw" aria-hidden="true"></i> <span>Home</span></a>
+			<a href="<?php echo ossn_site_url('home'); ?>" class="button"><i class="fa fa-home fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:homebutton'); ?></span></a>
 				<!--<img id="profile-img" src="<?php //echo ossn_loggedin_user()->iconURLS->small; ?>" class="online" alt="" />
 				<p><?php //echo $chatUser->fullname; ?></p>
 				<div id="status-options">
@@ -175,8 +175,8 @@ if ($recentMessages) {
 			</ul>
 		</div>
 		<div id="bottom-bar">
-			<button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>Add contact</span></button>
-			<button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>Settings</span></button>
+			<button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:addcontact'); ?></span></button>
+			<button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:settings'); ?></span></button>
 		</div>
 	</div>
 	<div class="content">
@@ -211,7 +211,7 @@ if ($recentMessages) {
 		</div>
 		<div class="message-input">
 			<div class="wrap">
-			<input type="text" placeholder="Write your message..." />
+			<input type="text" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>" />
 			<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
 			<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
 			</div>

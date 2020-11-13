@@ -43,8 +43,9 @@ function webchat_template_page(){
 }
 function chat_api(){
     	$content = ossn_plugin_view('webchat/chat_api');
-		$title = 'Chat_API';
-    	echo ossn_view_page($title, $content, 'chat_api_template');	
+		// $title = 'Chat_API';
+    	// echo ossn_view_page($title, $content, 'chat_api_template');	
+		echo $content;	
 }
 
 ossn_register_callback('ossn', 'init', 'unread_messages_count_api');

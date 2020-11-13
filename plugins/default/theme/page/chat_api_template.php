@@ -22,5 +22,4 @@ if (isset($params['contents'])) {
 }
 ?>
  <?php echo $contents;
-	//file_put_contents ("api_log.txt","Template results: ".print_r($contents,true),FILE_APPEND);
 
