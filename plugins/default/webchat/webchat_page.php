@@ -181,13 +181,16 @@ if ($recentMessages) {
 	</div>
 	<div class="content">
 		<div class="contact-profile">
+			<div class="back-arrow">
+				<i class="fa fa-arrow-left" aria-hidden="true"></i>
+			</div>
 			<img src="<?php echo $user2->payload->icon->small;?>" alt="<?php echo $user2->payload->fullname;?>" />
 			<p><?php echo $user2->payload->first_name;?></p>
-<!--			<div class="social-media">
-				<i class="fa fa-facebook" aria-hidden="true"></i>
-				<i class="fa fa-twitter" aria-hidden="true"></i>
-				 <i class="fa fa-instagram" aria-hidden="true"></i>
-			</div> -->
+			<div class="media-options">
+				<i class="fa fa-video-camera" aria-hidden="true"></i>
+				<i class="fa fa-phone" aria-hidden="true"></i>
+				<i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+			</div>
 		</div>
 		<div class="messages">
 			<ul>
@@ -213,6 +216,8 @@ if ($recentMessages) {
 			<div class="wrap">
 			<input type="text" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>" />
 			<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
+			<i class="fa fa-camera camera" aria-hidden="true"></i>
+			<i class="fa fa-smile-o emoji" aria-hidden="true"></i>
 			<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
 			</div>
 		</div>

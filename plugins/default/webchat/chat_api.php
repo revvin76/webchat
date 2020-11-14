@@ -70,13 +70,16 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 
 	echo ('
 		<div class="contact-profile">
+			<div class="back-arrow">
+				<i class="fa fa-arrow-left" aria-hidden="true"></i>
+			</div>
 			<img src="' . $user2->iconURL()->smaller . '" alt="' . $user2->fullname . '" />
 			<p>' . $user2->first_name . '</p>
-			<!--<div class="social-media">
-				<i class="fa fa-facebook" aria-hidden="true"></i>
-				<i class="fa fa-twitter" aria-hidden="true"></i>
-				 <i class="fa fa-instagram" aria-hidden="true"></i>
-			</div>-->
+			<div class="media-options">
+				<i class="fa fa-video-camera" aria-hidden="true"></i>
+				<i class="fa fa-phone" aria-hidden="true"></i>
+				<i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+			</div>
 		</div>
 		<div class="messages">
 			<ul>');

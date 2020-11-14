@@ -51,7 +51,7 @@ body {
   #frame #sidepanel #profile {
     width: 100%;
     margin: 0 auto;
-    padding: 5px 0 0 0;
+    padding: 0;
     background: #32465a;
   }
 }
@@ -327,7 +327,7 @@ body {
   float: none;
   border: none;
   width: 100%;
-  padding: 15px 0;
+  padding: 10px 0;
   background: #32465a;
   color: #f5f5f5;
   cursor: pointer;
@@ -359,7 +359,9 @@ body {
 }
 @media screen and (max-width: 735px) {
   #frame #sidepanel #profile a.button i {
-    font-size: 1.3em;
+    font-size: 3em;
+	margin: none;
+
   }
 }
 @media screen and (max-width: 735px) {
@@ -567,6 +569,8 @@ body {
   height: 60px;
   line-height: 60px;
   background: #f5f5f5;
+  color: #435f7a;
+  font-size: 1.1em;
 }
 #frame .content .contact-profile img {
   width: 40px;
@@ -577,17 +581,26 @@ body {
 #frame .content .contact-profile p {
   float: left;
 }
-#frame .content .contact-profile .social-media {
+#frame .content .contact-profile .media-options {
   float: right;
+  opacity: 0.5;
 }
-#frame .content .contact-profile .social-media i {
+#frame .content .contact-profile .back-arrow {
+  float: left;
+  opacity: 0.5;
+}
+#frame .content .contact-profile .media-options i {
   margin-left: 14px;
   cursor: pointer;
 }
-#frame .content .contact-profile .social-media i:nth-last-child(1) {
+#frame .content .contact-profile .back-arrow i{
+  margin-left: 14px;
+  cursor: pointer;
+}
+#frame .content .contact-profile .media-options i:nth-last-child(1) {
   margin-right: 20px;
 }
-#frame .content .contact-profile .social-media i:hover {
+#frame .content .contact-profile .media-options i:hover {
   color: #435f7a;
 }
 #frame .content .messages {
@@ -686,14 +699,14 @@ body {
   font-family: "proxima-nova",  "Source Sans Pro", sans-serif;
   float: left;
   border: none;
-  width: calc(100% - 90px);
+  width: calc(100% - 40px);
   padding: 11px 32px 10px 8px;
   font-size: 0.8em;
   color: #32465a;
 }
 @media screen and (max-width: 735px) {
   #frame .content .message-input .wrap input {
-    padding: 15px 32px 16px 8px;
+    padding: 15px 8px 16px 40px;
   }
 }
 #frame .content .message-input .wrap input:focus {
@@ -701,7 +714,27 @@ body {
 }
 #frame .content .message-input .wrap .attachment {
   position: absolute;
-  right: 60px;
+  right: 15px;
+  z-index: 4;
+  margin-top: 10px;
+  font-size: 1.1em;
+  color: #435f7a;
+  opacity: .5;
+  cursor: pointer;
+}
+#frame .content .message-input .wrap .camera {
+  position: absolute;
+  right: 30px;
+  z-index: 4;
+  margin-top: 10px;
+  font-size: 1.1em;
+  color: #435f7a;
+  opacity: .5;
+  cursor: pointer;
+}
+#frame .content .message-input .wrap .emoji {
+  position: absolute;
+  left: 5px;
   z-index: 4;
   margin-top: 10px;
   font-size: 1.1em;
@@ -711,8 +744,16 @@ body {
 }
 @media screen and (max-width: 735px) {
   #frame .content .message-input .wrap .attachment {
-    margin-top: 17px;
-    right: 65px;
+    margin-top: 15px;
+    right: 40px;
+  }
+  #frame .content .message-input .wrap .camera {
+    margin-top: 15px;
+    right: 10px;
+  }
+  #frame .content .message-input .wrap .emoji {
+    margin-top: 15px;
+    left: 15px;
   }
 }
 #frame .content .message-input .wrap .attachment:hover {
@@ -730,6 +771,7 @@ body {
 @media screen and (max-width: 735px) {
   #frame .content .message-input .wrap button {
     padding: 16px 0;
+	display:none;
   }
 }
 #frame .content .message-input .wrap button:hover {
