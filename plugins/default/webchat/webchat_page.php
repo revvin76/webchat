@@ -230,8 +230,11 @@ if ($recentMessages) {
 			<input type="text" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>" />
 			<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
 			<i class="fa fa-camera camera" aria-hidden="true"></i>
-			<i class="fa fa-smile-o emoji" aria-hidden="true"></i>
+			<div id="emojiPanel"><i class="fa fa-smile-o emoji" aria-hidden="true"></i></div>
 			<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+			<div class="emojiPanel outBottom" tabindex="-1">
+			&#128512
+			</div>
 			</div>
 		</div>
 	</div>
@@ -253,6 +256,16 @@ $(".expand-button").click(function() {
 	$("#contacts").toggleClass("expanded");
 });
 
+$("#emojiPanel").click(function() {
+	$(".emojiPanel").addClass("onFromBottom").focus();
+	$(".emojiPanel").removeClass("outBottom");
+});
+
+  $(".emojiPanel").focusout(function() {
+	$(".emojiPanel").addClass("outBottom");
+	$(".emojiPanel").removeClass("onFromBottom");
+  })
+			
 $("#status-options ul li").click(function() {
 	$("#profile-img").removeClass();
 	$("#status-online").removeClass("active");
