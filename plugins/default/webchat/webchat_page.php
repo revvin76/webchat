@@ -169,6 +169,12 @@ if ($recentMessages) {
 					  withguid = $(this).attr('id');
 					  updateActive(withguid);
 					  listMessages(withguid);
+					  setTimeout(function(){
+						  $("#sidepanel").removeClass("onFromLeft");
+						  $("#sidepanel").addClass("outLeft");
+						  $("#frame .content").removeClass("outRight");
+						  $("#frame .content").addClass("onFromRight");
+					  });
 					});
 				});	
 				</script>
@@ -184,6 +190,13 @@ if ($recentMessages) {
 			<div class="back-arrow">
 				<i class="fa fa-arrow-left" aria-hidden="true"></i>
 			</div>
+			<script>
+			$(".back-arrow").click(function() {
+				$("#sidepanel").removeClass("outLeft");
+				$("#sidepanel").addClass("onFromLeft");
+				$("#frame .content").removeClass("onFromRight");
+				$("#frame .content").addClass("outRight");
+			});</script>			
 			<img src="<?php echo $user2->payload->icon->small;?>" alt="<?php echo $user2->payload->fullname;?>" />
 			<p><?php echo $user2->payload->first_name;?></p>
 			<div class="media-options">

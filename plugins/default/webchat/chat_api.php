@@ -73,6 +73,13 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 			<div class="back-arrow">
 				<i class="fa fa-arrow-left" aria-hidden="true"></i>
 			</div>
+			<script>
+			$(".back-arrow").click(function() {
+				$("#sidepanel").removeClass("outLeft");
+				$("#sidepanel").addClass("onFromLeft");
+				$("#frame .content").removeClass("onFromRight");
+				$("#frame .content").addClass("outRight");				
+			});</script>			
 			<img src="' . $user2->iconURL()->smaller . '" alt="' . $user2->fullname . '" />
 			<p>' . $user2->first_name . '</p>
 			<div class="media-options">
@@ -140,7 +147,7 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 				};
 				
 				
-			echo "	<script>
+			echo "<script>
 			$(function() {
 				$('li.contact').click(function() {
 				  $('li.contact').removeClass('active');
@@ -149,6 +156,12 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 				  withguid = $(this).attr('id');
 				  updateActive(withguid);
 				  listMessages(withguid);
+					  setTimeout(function(){
+						  $('#sidepanel').removeClass('onFromLeft');
+						  $('#sidepanel').addClass('outLeft');
+						  $('#frame .content').removeClass('outRight');
+						  $('#frame .content').addClass('onFromRight');
+					  });
 				});
 			});	
 			</script>";
