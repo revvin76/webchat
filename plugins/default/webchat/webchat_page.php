@@ -73,8 +73,8 @@ if ($recentMessages) {
 	$user2 = CallAPI ($userURL , $userPARAM);
 	
 	/* Get the first message thread */
-	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => $chatUser->guid , 'to' => $user2->payload->guid);
-	$listMessages = CallAPI ($listURL , $listPARAM);
+	// $listPARAM = array( 'api_key_token' => $apiKey , 'guid' => $chatUser->guid , 'to' => $user2->payload->guid);
+	// $listMessages = CallAPI ($listURL , $listPARAM);
 	
 	/* Store the current notification counts */
 	$notifcountPARAM = array( 'api_key_token' => $apiKey , 'guid' => $chatUser->guid);
@@ -185,7 +185,7 @@ if ($recentMessages) {
 			<button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:settings'); ?></span></button>
 		</div>
 	</div>
-	<div class="content">
+	<div id="content" class="content">
 		<div class="contact-profile">
 			<div class="back-arrow">
 				<i class="fa fa-arrow-left" aria-hidden="true"></i>
@@ -205,35 +205,22 @@ if ($recentMessages) {
 				<i class="fa fa-ellipsis-v" aria-hidden="true"></i>
 			</div>
 		</div>
-		<div class="messages">
+		<div id="messages" class="messages">
 			<ul>
-				<?php
-					if ($listMessages->payload->count > 0) {
-						foreach($listMessages->payload->list as $message)
-						{
-							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-								echo '<li class="sent">';						
-								echo '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-								echo '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
-							} else {
-								echo '<li class="replies">';
-								echo '<img src="' . $user2->payload->icon->small . '" alt="" />';
-								echo '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
-							}
-							echo '</li>';
-						}
-					};?>								
+				<!-- no need to display message content on first load. This will be populated when you click on a contact -->
 			</ul>
 		</div>
-		<div class="message-input">
+		<div id="message-input" class="message-input">
 			<div class="wrap">
-			<input type="text" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>" />
+			<input id="main-input" type="text" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>" />
 			<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
 			<i class="fa fa-camera camera" aria-hidden="true"></i>
 			<div id="emojiPanel"><i class="fa fa-smile-o emoji" aria-hidden="true"></i></div>
 			<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
 			<div class="emojiPanel outBottom" tabindex="-1">
-			&#128512
+			<?php 
+			include ( $_SERVER['DOCUMENT_ROOT'] . '/components/WebChat/plugins/default/webchat/emojiPanel.php');
+			?>
 			</div>
 			</div>
 		</div>
@@ -256,46 +243,66 @@ $(".expand-button").click(function() {
 	$("#contacts").toggleClass("expanded");
 });
 
-$("#emojiPanel").click(function() {
+// Clicking an emoji
+$('#emojiContainer').on('click', '.visibleChar input', function () {
+    $(".message-input .wrap > input").val($(".message-input .wrap > input").val() + $(this).attr('value'));
+});
+
+// Clicking outside of the emoji selection panel makes it disappear			
+$( "body" ).click(function( event ) {
+	var target = $(event.target);    
+    if ((target.parents('div.messages, div.contact-info').length) || (event.target.id == 'main-input'))  {
+		if ($(".emojiPanel").hasClass("onFromBottom")) {
+			$(".emojiPanel").addClass("outBottom");
+			$(".emojiPanel").removeClass("onFromBottom");
+		}
+    }
+});
+
+// Click the emoji icon for the emoji selector panel to appear
+$("#emojiPanel").click(function(e) {
 	$(".emojiPanel").addClass("onFromBottom").focus();
 	$(".emojiPanel").removeClass("outBottom");
 });
-
-  $(".emojiPanel").focusout(function() {
-	$(".emojiPanel").addClass("outBottom");
-	$(".emojiPanel").removeClass("onFromBottom");
-  })
 			
-$("#status-options ul li").click(function() {
-	$("#profile-img").removeClass();
-	$("#status-online").removeClass("active");
-	$("#status-away").removeClass("active");
-	$("#status-busy").removeClass("active");
-	$("#status-offline").removeClass("active");
-	$(this).addClass("active");
+// $("#status-options ul li").click(function() {
+	// $("#profile-img").removeClass();
+	// $("#status-online").removeClass("active");
+	// $("#status-away").removeClass("active");
+	// $("#status-busy").removeClass("active");
+	// $("#status-offline").removeClass("active");
+	// $(this).addClass("active");
 	
-	if($("#status-online").hasClass("active")) {
-		$("#profile-img").addClass("online");
-	} else if ($("#status-away").hasClass("active")) {
-		$("#profile-img").addClass("away");
-	} else if ($("#status-busy").hasClass("active")) {
-		$("#profile-img").addClass("busy");
-	} else if ($("#status-offline").hasClass("active")) {
-		$("#profile-img").addClass("offline");
-	} else {
-		$("#profile-img").removeClass();
-	};
+	// if($("#status-online").hasClass("active")) {
+		// $("#profile-img").addClass("online");
+	// } else if ($("#status-away").hasClass("active")) {
+		// $("#profile-img").addClass("away");
+	// } else if ($("#status-busy").hasClass("active")) {
+		// $("#profile-img").addClass("busy");
+	// } else if ($("#status-offline").hasClass("active")) {
+		// $("#profile-img").addClass("offline");
+	// } else {
+		// $("#profile-img").removeClass();
+	// };
 	
-	$("#status-options").removeClass("active");
-});
+	// $("#status-options").removeClass("active");
+// });
 
 function newMessage() {
-	message = $(".message-input input").val();
+	$(".emojiPanel").addClass("outBottom");
+	$(".emojiPanel").removeClass("onFromBottom");
+	message = $("#main-input").val();
 	if($.trim(message) == '') {
 		return false;
 	}
-	$('<li class="sent"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section>' + message + '</section></article></li>').appendTo($('.messages ul'));
-	$('.message-input input').val(null);
+	
+	// Lets check if its a single emoji, and if so make it bigger
+	var lgemoji = null;
+	if (message.length==2 & message.codePointAt(0) > 1000 ) { lgemoji = "lg-emoji"}
+	
+	$('<li class="sent ' + lgemoji + '"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section>' + message + '</section></article></li>').appendTo($('.messages ul'));
+	$('#main-input').val(null).blur();
+	
 	$('.contact.active .preview').html('<span>You: </span>' + message);
 	$(".messages").animate({ scrollTop: $(document).height() }, "fast");
 	activeContact = $('li.contact.active').attr("id");

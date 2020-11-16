@@ -66,7 +66,7 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
  	
 	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->guid, 'markallread' => 1);
 	$listMessages = CallAPI ($listURL , $listPARAM); 
-	//error_log('CallAPI() --> $listMessages [chat_api.php:line 68] : ' . PHP_EOL . $result . PHP_EOL );
+	//error_log('CallAPI() --> $listMessages [chat_api.php:line 68] : ' . PHP_EOL . print_r($listMessages,true) . PHP_EOL );
 
 	echo ('
 		<div class="contact-profile">
@@ -93,15 +93,24 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 				if ($listMessages->payload->count > 0) {
 					foreach($listMessages->payload->list as $message)
 					{
+						// Lets check if its a single emoji, and if so make it bigger
+						$lgemoji = "";
+						// Check the message contains a single unicode character
+						if ((strlen(html_entity_decode($message->message)) == 9) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
+							$lgemoji = "lg-emoji";														
+						}
+				
+						//if (strlen($message->message)==2) { $lgemoji = "lg-emoji";}
+
 						if ($message->message_from->guid == ossn_loggedin_user()->guid) {
 							// echo (print_r($message,true));
-							echo  '<li class="sent" data-id="' . $message->id . '">';						
+							echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
 							echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							echo  '<article><section class="message">' . htmlspecialchars_decode($message->message) . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						} else {
-							echo  '<li class="replies" data-id="' . $message->id . '">';
+							echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
 							echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
-							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							echo  '<article><section class="message">' . htmlspecialchars_decode($message->message) . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						}
 						$data .= '</li>';
 					};
