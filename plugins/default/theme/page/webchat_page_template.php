@@ -20,11 +20,13 @@ if (isset($params['contents'])) {
 } else {
     $contents = '';
 }
+//header('Content-Type: text/html; charset=ISO-8859-1');
+header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $sitelanguage; ?>">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html" charset=utf-8"/>
     <title><?php echo $title; ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="manifest" href="<?php echo ossn_site_url('components/WebChat/manifest.json');?>">
@@ -39,7 +41,8 @@ if (isset($params['contents'])) {
 </head>
 
 <body>
- <button class="add-button">Add to home screen</button>
+<style>button.add-button { display:none; }</style>
+<button class="add-button">Add to home screen</button>
  <?php echo $contents; ?>
 <script>
 // Code to handle install prompt on desktop
