@@ -18,5 +18,5 @@
 	"display": "standalone",
 	"scope": "/webchat",
 	"theme_color": "#3367D6",
-	"prefer_related_applications": true,
+	"prefer_related_applications": true
 }
