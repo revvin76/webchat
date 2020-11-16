@@ -32,6 +32,8 @@ function web_chat() {
 				'parent' => 'links',
 				'icon' => $icon
 		));
+	} else {
+		ossn_register_page('webchat', 'webchat_redirect');
 	}
 }
 function webchat_template_page(){
@@ -42,6 +44,9 @@ function webchat_template_page(){
 function chat_api(){
     	$content = ossn_plugin_view('webchat/chat_api');
 		echo $content;	
+}
+function webchat_redirect(){
+	redirect ("login");
 }
 
 ossn_register_callback('ossn', 'init', 'web_chat');
