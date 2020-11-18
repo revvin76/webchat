@@ -1,7 +1,5 @@
 <?php
 $apiKey = ossn_services_apikey();
-//$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
-//$siteURL = "http://10.48.1.28/api/v1.0/";
 $siteURL = ossn_site_url('api/v1.0/');
 $addURL = $siteURL."message_add?";
 $listURL = $siteURL."message_list?";
@@ -19,7 +17,6 @@ function CallAPI ($url,$post) {
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	$result = curl_exec($ch);
 	curl_close($ch);
-	//error_log('API --> CallAPI() [chat_api.php:line 20]: ' . PHP_EOL . $result . PHP_EOL);
 	return json_decode($result);
 }
 function elapsed_time($timestamp, $precision = 1) {
@@ -53,7 +50,7 @@ function checkStatus($guidToCheck) {
 if ((input('action') !== null) && (input('action') == 'send')) {
     $from = filter_var(input('from'), FILTER_SANITIZE_NUMBER_INT);
     $to = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
-    $message = filter_var(input('message'), FILTER_SANITIZE_STRING);
+    $message = html_entity_decode(input('message'));
 	
 	$addPARAM = array( 'api_key_token' => $apiKey , 'from' => $from,'to' => $to, 'message' => $message);
 	$addMessage = CallAPI ($addURL , $addPARAM);
@@ -78,7 +75,8 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 				$("#sidepanel").removeClass("outLeft");
 				$("#sidepanel").addClass("onFromLeft");
 				$("#frame .content").removeClass("onFromRight");
-				$("#frame .content").addClass("outRight");				
+				$("#frame .content").addClass("outRight");	
+				updateActive(-1);				
 			});</script>			
 			<img src="' . $user2->iconURL()->smaller . '" alt="' . $user2->fullname . '" />
 			<p>' . $user2->first_name . '</p>
@@ -96,21 +94,18 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 						// Lets check if its a single emoji, and if so make it bigger
 						$lgemoji = "";
 						// Check the message contains a single unicode character
-						if ((strlen(html_entity_decode($message->message)) == 9) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
+						if ((strlen(html_entity_decode($message->message)) == 4) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
 							$lgemoji = "lg-emoji";														
 						}
-				
-						//if (strlen($message->message)==2) { $lgemoji = "lg-emoji";}
 
 						if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-							// echo (print_r($message,true));
 							echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
 							echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-							echo  '<article><section class="message">' . htmlspecialchars_decode($message->message) . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						} else {
 							echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
 							echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
-							echo  '<article><section class="message">' . htmlspecialchars_decode($message->message) . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
 						}
 						$data .= '</li>';
 					};
@@ -185,48 +180,60 @@ if ((input('action') !== null) && (input('action') == 'notifs')) {
 	$notifcountPARAM = array( 'api_key_token' => $apiKey , 'guid' => $guid);
 	$notifcount = CallAPI ($notifcountURL , $notifcountPARAM);
 	
-	$notifs = input('notifs');
+	$notifs = json_decode(htmlspecialchars_decode(input('notifs')));
+
 	
 	// Check whether the stored notifications count match the live notifications count
 	if ( $notifcount->payload === $notifs->payload || $notifcount->payload === false) {
 		// We'll return false, as there is no need to perform any further actions when the live count hasn't changed
 		$response = [ 
 		'success' => false,
-		'message' => 'Failed'
+		'debug' => '',
+		'message' => 'Failed'  // send "failed" if there are no unread messages
 		];
 		echo json_encode($response);
 		return false;
 	} else {
 		// We know there has been a change, we just need to determine if it was from the user currently chatting
 		$current_chat = false;
-		$current_guid = input('currentuser');
+		$current_guid = intval(input('currentuser'));
 		
- 		foreach ( $notifcount->payload as $live_count ) {
-			if ( $current_guid == $live_count->message_from) {
-				// We've found notifications regarding the current chat, need to return whether the count has changed
-				if ($notifs->payload) {
-					foreach ($notifs->payload as $orig_count) {
-						if ($live_count->message_from == $orig_count->message_from ) {
-							if ( $live_count->total > $orig_count->total ) {
-								$current_chat = true;
-							}					
-						}
-					}
-				} else {
-					$current_chat = true;
-				}
-			}
-		} 
+		// If current_guid = -1, then we havent selected a chat to view yet, so we skip the below loops
+		if ($current_guid !== -1) {
+			$current_chat = true;
+			
+			//  Below logic should make sure the currently viewed thread is only updated if you receive a new message in it. Currently, the current thread will refresh no matter which thread receives a message.
+			// foreach ( $notifcount->payload as $updated_thread ) {
+				// if ( $current_guid == $updated_thread->message_from) {
+					// We've found notifications regarding the current chat, need to return whether the count has changed
+					// if ($notifs->payload) {
+						// foreach ($notifs->payload as $old_thread) {
+							// if ($updated_thread->message_from == $old_thread->message_from ) {
+								// if ( $updated_thread->total != $old_thread->total ) {
+									// $current_chat = true;
+								// }					
+							// }
+						// }
+					// } else {
+						// $current_chat = true;
+					// }
+				// }
+			// }
+		}
+		$debug=$current_chat;
 		$response = [ 
 		'success' => true,
 		'current_chat' => $current_chat,
-		'payload' => $notifcount->payload,
-		'message' => 'Success'
+		'payload' => $notifcount,
+		'message' => 'Success',
+		'debug' => $debug
 		];
 		echo json_encode($response);
 		return true;
 	}
+
 }
+
 
 
 			

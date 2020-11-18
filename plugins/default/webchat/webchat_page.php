@@ -2,7 +2,6 @@
 $chatUser = ossn_loggedin_user();
 //******************* This section contains static variables *******************//
 $apiKey = ossn_services_apikey();
-//$apiKey = "d30de045bb6d5ff11cdec4e68d6d86a545802aaebabb390e52d903ff24f7656b";
 $siteURL = ossn_site_url('api/v1.0/');
 $addURL = $siteURL."message_add?";
 $listURL = $siteURL."message_list?";
@@ -10,7 +9,6 @@ $userURL = $siteURL."user_details?";
 $notifsURL = $siteURL."notifications_count?";
 $notifcountURL = $siteURL."unread_mesages_count_custom?";
 $recentURL = $siteURL."message_recent?";
-//* api_key_token=<token>&guid=<user guid> *//
 //******************************************************************************//
 function elapsed_time($timestamp, $precision = 1) {
   $time = time() - $timestamp;
@@ -49,10 +47,6 @@ function checkStatus($guidToCheck) {
 	return false;
 }	
 
-// Debug: Save the API key variable to a log file.
-/* file_put_contents ("api_log.txt","webchat_page.php : API KEY : " . $apiKey . PHP_EOL,FILE_APPEND);	
-file_put_contents ("api_log.txt","webchat_page.php : SITE URL : " . $siteURL . PHP_EOL,FILE_APPEND); */	
-
 /* Get the list of message threads */
 $recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
 $recentMessages = CallAPI ($recentURL , $recentPARAM);
@@ -86,6 +80,7 @@ if ($recentMessages) {
 <script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
 
 <div id="frame">
+	<input id="activeContact" type="number" value="-1" hidden />
 	<div id="sidepanel">
 		<div id="profile">
 			<!--<div class="wrap">-->
@@ -192,6 +187,7 @@ if ($recentMessages) {
 			</div>
 			<script>
 			$(".back-arrow").click(function() {
+				updateActive(-1);
 				$("#sidepanel").removeClass("outLeft");
 				$("#sidepanel").addClass("onFromLeft");
 				$("#frame .content").removeClass("onFromRight");
@@ -229,8 +225,8 @@ if ($recentMessages) {
 <audio id="newmessage" src="<?php echo ossn_site_url("components/OssnSounds/audios/pling.mp3"); ?>" type="audio/mp3"></audio>
 
 <script>   
-var activeContact = $('li.contact.active').attr("id");
 var notifs_running = false;
+var notifcount = '<?php echo (print_r(json_encode($notifcount),true)); ?>';
 
 $(".messages").animate({ scrollTop: $(document).height() }, "fast");
 
@@ -305,7 +301,7 @@ function newMessage() {
 	
 	$('.contact.active .preview').html('<span>You: </span>' + message);
 	$(".messages").animate({ scrollTop: $(document).height() }, "fast");
-	activeContact = $('li.contact.active').attr("id");
+	activeContact = document.getElementById('activeContact').value;
 	$.post("/chat_api",
 	{
 	  action: 'send',  
@@ -328,12 +324,11 @@ function listMessages(withguid){
 };
 
 function updateActive(newContact) {
-	activeContact = newContact;
-	notifs_running = true;
+	document.getElementById('activeContact').value = newContact;
 }
 
 function recentMessages(){	
-	$.post( "/chat_api", { action: "recent", to: <?php echo ossn_loggedin_user()->guid; ?> , active: activeContact })
+	$.post( "/chat_api", { action: "recent", to: <?php echo ossn_loggedin_user()->guid; ?> , active: document.getElementById('activeContact').value })
 	 .done(function( data ) {
 		$("div#contacts ul").remove();
 		$("div#contacts").html(data);
@@ -342,35 +337,70 @@ function recentMessages(){
 				
 function checkNotifs(){
 	if ( notifs_running == false ) {
-		notifs_running = true;
-		var activeContact_copy = activeContact;
+		notifs_running = true; 
+		var activeContact_copy = document.getElementById('activeContact').value;
 		$.ajax({
 			url: '/chat_api',
-			data: {action: "notifs", currentuser: $('li.contact.active').attr("id"), guid: <?php echo ossn_loggedin_user()->guid; echo ", notifs: ".print_r(json_encode($notifcount),true); ?>},
+			data: {action: "notifs", currentuser: activeContact_copy, guid: <?php echo ossn_loggedin_user()->guid;?> , notifs: notifcount},
 			type: 'POST',
 			dataType: 'json',
 			success:  function(returnedData) {
-				if (returnedData.success == true){
-					if (returnedData.current_chat == true){
-						listMessages (activeContact);
-					} else {
-						var unseen_notification = false;
-						$.each(returnedData.payload, function(arrayID, thread) {
-							if ( $("#contacts ul").find( "#" + thread.message_from + " .contact-new").length ) {
-				 
-							} else {
-								unseen_notification = true;
+				//console.log ("Success: " + JSON.stringify(returnedData.success));
+				if (returnedData.success === true){
+					var oldPayload = JSON.stringify(JSON.parse(notifcount).payload);
+					var newPayload = JSON.stringify(JSON.parse(JSON.stringify(returnedData.payload.payload)));
+					// console.log ("*************************************************");
+					// console.log (oldPayload);
+					// console.log ("-------------------------------------------------");
+					// console.log (JSON.stringify(returnedData.debug));
+					// console.log (newPayload);
+					// if (newPayload === oldPayload) console.log ("MATCH"); else console.log ("NO MATCH");
+					// console.log ("returnedData.current_chat: " + JSON.stringify(returnedData.current_chat));
+					// console.log ("/////////////////////////////////////////////////");
+					
+					if (newPayload != oldPayload) {
+						//console.log ("Current_chat=" + returnedData.current_chat);
+						if (returnedData.current_chat == true){
+							//console.log ('Matched the current chat, so updating the current view.');
+							listMessages (document.getElementById('activeContact').value);
+						}
+
+						var unseen_notification = false;						
+						$.each(returnedData.payload, function(i, item) {
+							if (i==="payload") {
+								if (item.length){
+									$.each(item, function(thread, v) {
+										if ( $("#contacts ul").find( "#" + item[thread].message_from + " .contact-new").length ) {
+											// console.log ("Contact id" + item[thread].message_from + "already has a notification icon, no need to add one.");
+										} else {								
+											// console.log ("Contact id" + item[thread].message_from + "needs a notification icon.");
+											if (returnedData.current_chat == true && item[thread].message_from === activeContact_copy){
+												// console.log ('Matched the current chat, so not flagging an unseen message.');
+											} else {
+												unseen_notification = true;
+											};
+										}
+									});
+								};
 							}
 						});
+										
 						if (unseen_notification == true) {
 							recentMessages();
 							var audioElement = $("#newmessage");
 							// Only play sound if user hasn't changed the active thread since the check started
-							if (activeContact_copy == activeContact) audioElement.get(0).play(); 
+							if (activeContact_copy == document.getElementById('activeContact').value) audioElement.get(0).play(); 
+							notifcount = JSON.stringify(returnedData.payload); // If the previous message count is different from the current, we'll take a copy
 						}
+						
+						// After processing the notification, copy it for future checks.
+						notifcount = JSON.stringify(returnedData.payload);						
 					}
 				} else {
-					//console.log ("Nothing to do");
+					// No unread messages, so resetting notifcount to empty
+					temp = JSON.parse(notifcount);
+					temp.payload = '[]';
+					notifcount= JSON.stringify(temp);
 				}
 				running=false;
 			},
