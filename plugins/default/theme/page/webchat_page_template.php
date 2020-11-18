@@ -29,7 +29,7 @@ header('Content-Type: text/html; charset=UTF-8');
     <meta http-equiv="Content-Type" content="text/html" charset=utf-8"/>
     <title><?php echo $title; ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="manifest" href="<?php echo ossn_site_url('components/WebChat/manifest.json');?>">
+	<link rel="manifest" href="<?php echo ossn_site_url('components/WebChat/webchat.manifest');?>">
 	<meta name="theme-color" content="#3367D6">
     <link rel="icon" href="<?php echo ossn_add_cache_to_url(ossn_theme_url('images/favicon.ico'));?>" type="image/x-icon" />
 	<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
