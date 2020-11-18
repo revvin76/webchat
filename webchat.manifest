@@ -1,0 +1,23 @@
+{
+  "name": "WebChat for OSSN",
+  "short_name": "WebChat",
+  "description": "WebChat for OSSN",
+  "icons": [
+    {
+      "src": "/components/WebChat/plugins/default/img/icons/icon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    // ...
+    {
+      "src": "/components/WebChat/plugins/default/img/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/webchat",
+  "display": "standalone",
+  "theme_color": "#3367D6",
+  "background_color": "#3367D6"
+  "scope": "/webchat",
+}
