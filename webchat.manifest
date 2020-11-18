@@ -1,23 +1,26 @@
 {
-  "name": "WebChat for OSSN",
-  "short_name": "WebChat",
-  "description": "WebChat for OSSN",
-  "icons": [
-    {
-      "src": "/components/WebChat/plugins/default/img/icons/icon-32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    // ...
-    {
-      "src": "/components/WebChat/plugins/default/img/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
-  "start_url": "/webchat",
-  "display": "standalone",
-  "theme_color": "#3367D6",
-  "background_color": "#3367D6"
-  "scope": "/webchat",
+"short_name": "WebChat",
+"name": "WebChat 1.3.6",
+"lang": "en",
+"description": "WebChat for OSSN",
+"start_url": "/webchat",
+"background_color": "#3367d6",
+"theme_color": "#3367d6",
+"dir": "ltr",
+"display": "standalone",
+"orientation": "portrait",
+"icons": [{"src": "/components/WebChat/plugins/default/img/icons/android-icon-192x192-dunplab-manifest-23418.png","type": "image/png","sizes": "192x192"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-180x180-dunplab-manifest-23418.png","type": "image/png","sizes": "180x180"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-152x152-dunplab-manifest-23418.png","type": "image/png","sizes": "152x152"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-144x144-dunplab-manifest-23418.png","type": "image/png","sizes": "144x144"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-120x120-dunplab-manifest-23418.png","type": "image/png","sizes": "120x120"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-114x114-dunplab-manifest-23418.png","type": "image/png","sizes": "114x114"},
+{"src": "/components/WebChat/plugins/default/img/icons/favicon-96x96-dunplab-manifest-23418.png","type": "image/png","sizes": "96x96"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-76x76-dunplab-manifest-23418.png","type": "image/png","sizes": "76x76"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-72x72-dunplab-manifest-23418.png","type": "image/png","sizes": "72x72"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-60x60-dunplab-manifest-23418.png","type": "image/png","sizes": "60x60"},
+{"src": "/components/WebChat/plugins/default/img/icons/apple-icon-57x57-dunplab-manifest-23418.png","type": "image/png","sizes": "57x57"},
+{"src": "/components/WebChat/plugins/default/img/icons/favicon-32x32-dunplab-manifest-23418.png","type": "image/png","sizes": "32x32"},
+{"src": "/components/WebChat/plugins/default/img/icons/favicon-16x16-dunplab-manifest-23418.png","type": "image/png","sizes": "16x16"}],
+"prefer_related_applications": "false"
 }
