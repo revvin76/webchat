@@ -7,7 +7,7 @@
     <license>GNU General Public License, version 2</license>
     <author_url>http://www.kjbtech.co.uk/</author_url>
     <license_url>http://www.opensource-socialnetwork.org/licence/</license_url>
-    <version>1.3.5</version>
+    <version>1.3.6</version>
 	<requires>
 		<type>ossn_version</type>
 		<version>5.5</version>
