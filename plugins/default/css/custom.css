@@ -699,10 +699,10 @@ body {
   width: 100%;
   z-index: 99;
 }
-/* #frame .content .message-input .wrap { */
-  /* position: relative; */
-/* } */
-#frame .content .message-input .wrap input {
+#frame .content .message-input .wrap {
+  position: relative;
+}
+#frame .content .message-input .wrap textarea {
   font-family: "proxima-nova",  "Source Sans Pro", sans-serif;
   float: left;
   border: none;
@@ -712,24 +712,14 @@ body {
   color: #32465a;
 }
 @media screen and (max-width: 735px) {
-  #frame .content .message-input .wrap input {
+  #frame .content .message-input .wrap textarea {
     padding: 15px 8px 16px 40px;
   }
 }
-#frame .content .message-input .wrap input:focus {
+#frame .content .message-input .wrap textarea:focus {
   outline: none;
 }
 #frame .content .message-input .wrap .attachment {
-  position: absolute;
-  right: 15px;
-  z-index: 4;
-  margin-top: 15px;
-  font-size: 1.1em;
-  color: #435f7a;
-  opacity: .5;
-  cursor: pointer;
-}
-#frame .content .message-input .wrap .camera {
   position: absolute;
   right: 40px;
   z-index: 4;
@@ -738,6 +728,29 @@ body {
   color: #435f7a;
   opacity: .5;
   cursor: pointer;
+  bottom: -32px;
+}
+#frame .content .message-input .wrap .camera {
+  position: absolute;
+  right: 65px;
+  z-index: 4;
+  margin-top: 15px;
+  font-size: 1.1em;
+  color: #435f7a;
+  opacity: .5;
+  cursor: pointer;
+  bottom: -32px;
+}
+#frame .content .message-input .wrap .send {
+  position: absolute;
+  right: 15px;
+  z-index: 4;
+  margin-top: 15px;
+  font-size: 1.1em;
+  color: #435f7a;
+  opacity: .5;
+  cursor: pointer;
+  bottom: -32px;
 }
 #frame .content .message-input .wrap .emoji {
   position: absolute;
@@ -748,13 +761,18 @@ body {
   color: #435f7a;
   opacity: .5;
   cursor: pointer;
+  bottom: -32px;
 }
 @media screen and (max-width: 735px) {
   #frame .content .message-input .wrap .attachment {
     margin-top: 15px;
-    right: 40px;
+    right: 70px;
   }
   #frame .content .message-input .wrap .camera {
+    margin-top: 15px;
+    right: 40px;
+  }
+  #frame .content .message-input .wrap .send {
     margin-top: 15px;
     right: 10px;
   }
@@ -885,4 +903,7 @@ body {
 
 @keyframes out_left {
     100% { right: calc(-100%); }
+}
+section.message.im {
+	white-space: pre-wrap;
 }
