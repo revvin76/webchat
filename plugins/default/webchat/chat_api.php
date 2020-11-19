@@ -8,7 +8,6 @@ $notifsURL = $siteURL."notifications_count?";
 $notifcountURL = $siteURL."unread_mesages_count_custom?";
 $recentURL = $siteURL."message_recent?";
 //******************************************************************************//
-
 function CallAPI ($url,$post) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
@@ -47,14 +46,62 @@ function checkStatus($guidToCheck) {
 	return false;
 }	
 
+
+function returnFriendStatuses() {
+	$friends = ossn_loggedin_user()->getFriends();
+	if(!$friends) {
+			return false;
+	}
+	$friendStatuses = [];
+	foreach($friends as $friend) {
+		if($friend instanceof OssnUser) {
+			$friendStatuses[$friend->guid] =  $friend->isOnline(10);
+		}
+	}
+	return json_encode($friendStatuses);
+}
+
 if ((input('action') !== null) && (input('action') == 'send')) {
     $from = filter_var(input('from'), FILTER_SANITIZE_NUMBER_INT);
     $to = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
-    $message = html_entity_decode(input('message'));
 	
-	$addPARAM = array( 'api_key_token' => $apiKey , 'from' => $from,'to' => $to, 'message' => $message);
+/* 	error_log('Raw Message received by chat_api: ' . PHP_EOL . print_r(input('message'),true) . PHP_EOL );
+	
+	$addPARAM = array( 'api_key_token' => $apiKey , 'from' => $from,'to' => $to, 'message' => input('message'));
 	$addMessage = CallAPI ($addURL , $addPARAM);
-	return $addMessage;
+	return $addMessage; */
+	
+	$send = new OssnMessages;
+
+	$nl2br = str_ireplace(array("\r\n","\r","\n",'\r','\n'),'<br />', input("message"));
+	$message = str_ireplace(array('<br /><br />','<br />'),'\r\n', $nl2br);
+
+	error_log('\n replaced?: ' . PHP_EOL . $message . PHP_EOL );
+	
+	if(trim(ossn_restore_new_lines($message)) == ''){
+		echo 0;
+		exit;
+	}
+	$to = input('to');
+	if ($message_id = $send->send(ossn_loggedin_user()->guid, $to, $message)) {
+		$user = ossn_user_by_guid(ossn_loggedin_user()->guid);
+		
+		$instance = ossn_get_message($message_id);
+		$message = $instance->message;
+		
+		$params['message_id'] = $message_id;
+		$params['user'] = $user;
+		$params['message'] = $message;
+		$params['instance'] = $instance;
+		$params['view_type'] = 'actions/send';
+		echo ossn_plugin_view('messages/templates/message-send', $params);
+	} else {
+		echo 0;
+	}
+//messages only at some points #470
+// don't mess with system ajax requests
+exit;
+
 }
 
 if ((input('action') !== null) && (input('action') == 'messages')) {
@@ -188,7 +235,7 @@ if ((input('action') !== null) && (input('action') == 'notifs')) {
 		// We'll return false, as there is no need to perform any further actions when the live count hasn't changed
 		$response = [ 
 		'success' => false,
-		'debug' => '',
+		'statuses' => returnFriendStatuses(),
 		'message' => 'Failed'  // send "failed" if there are no unread messages
 		];
 		echo json_encode($response);
@@ -226,7 +273,7 @@ if ((input('action') !== null) && (input('action') == 'notifs')) {
 		'current_chat' => $current_chat,
 		'payload' => $notifcount,
 		'message' => 'Success',
-		'debug' => $debug
+		'statuses' => $debug
 		];
 		echo json_encode($response);
 		return true;
