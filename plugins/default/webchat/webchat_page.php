@@ -208,16 +208,17 @@ if ($recentMessages) {
 		</div>
 		<div id="message-input" class="message-input">
 			<div class="wrap">
-			<input id="main-input" type="text" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>" />
-			<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
-			<i class="fa fa-camera camera" aria-hidden="true"></i>
-			<div id="emojiPanel"><i class="fa fa-smile-o emoji" aria-hidden="true"></i></div>
-			<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+				<textarea id="main-input" type="text" rows="1" cols="40" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>"></textarea>
+				<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
+				<i class="fa fa-camera camera" aria-hidden="true"></i>
+				<i class="fa fa-paper-plane send" aria-hidden="true"></i>
+				<i class="fa fa-smile-o emoji" aria-hidden="true" id="emojiPanel"></i>
+			</div>
+			<!--<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>-->
 			<div class="emojiPanel outBottom" tabindex="-1">
 			<?php 
 			include ( $_SERVER['DOCUMENT_ROOT'] . '/components/WebChat/plugins/default/webchat/emojiPanel.php');
 			?>
-			</div>
 			</div>
 		</div>
 	</div>
@@ -241,7 +242,7 @@ $(".expand-button").click(function() {
 
 // Clicking an emoji
 $('#emojiContainer').on('click', '.visibleChar input', function () {
-    $(".message-input .wrap > input").val($(".message-input .wrap > input").val() + $(this).attr('value'));
+    $(".message-input .wrap > textarea").val($(".message-input .wrap > textarea").val() + $(this).attr('value'));
 });
 
 // Clicking outside of the emoji selection panel makes it disappear			
@@ -296,12 +297,17 @@ function newMessage() {
 	var lgemoji = null;
 	if (message.length==2 & message.codePointAt(0) > 1000 ) { lgemoji = "lg-emoji"}
 	
-	$('<li class="sent ' + lgemoji + '"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section>' + message + '</section></article></li>').appendTo($('.messages ul'));
+	$('<li class="sent ' + lgemoji + '"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section class="message im">' + message + '</section><section class="message_time">Just now</section></article></li>').appendTo($('.messages ul'));
+	
+	// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
 	$('#main-input').val(null).blur();
+	$('#main-input').css("height","15px");
+	$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
 	
 	$('.contact.active .preview').html('<span>You: </span>' + message);
 	$(".messages").animate({ scrollTop: $(document).height() }, "fast");
 	activeContact = document.getElementById('activeContact').value;
+	
 	$.post("/chat_api",
 	{
 	  action: 'send',  
@@ -401,6 +407,15 @@ function checkNotifs(){
 					temp = JSON.parse(notifcount);
 					temp.payload = '[]';
 					notifcount= JSON.stringify(temp);
+					jQuery.each(JSON.parse(returnedData.statuses), function(i, val) {
+					  if (val == true) {
+						$('#' + i + ' div span.contact-status').addClass('online');
+						$('#' + i + ' div span.contact-status').removeClass('busy');
+					  } else {
+						$('#' + i + ' div span.contact-status').addClass('busy');
+						$('#' + i + ' div span.contact-status').removeClass('online');
+					  }
+					});
 				}
 				running=false;
 			},
@@ -422,14 +437,33 @@ setInterval(function() {
 }, 3000); 
 
 // Click the SEND button
-$('.submit').click(function() {
+$('.send').click(function() {
   newMessage();
   return false;
 });
-// Press ENTER to send
+/* // Press ENTER to send
 $(window).on('keydown', function(e) {
   if (e.which == 13) {
     newMessage();
     return false;
   }
-});</script>
+}); */
+
+// automatically adjust size to fit content
+$('#main-input').on('input', function () {
+// compute the height difference which is caused by border and outline
+        var outerHeight = parseInt(window.getComputedStyle(this).height, 10);
+        var diff = outerHeight - this.clientHeight;
+		var minHeight = 15;
+
+        // set the height to 0 in case of it has to be shrinked
+        this.style.height = 0;
+
+        // set the correct height
+        // this.scrollHeight is the full height of the content, not just the visible part
+        this.style.height = Math.max(minHeight, this.scrollHeight + diff) + 'px';
+
+		$("#frame .content .message-input .wrap .fa").css("bottom",-(Math.max(minHeight, this.scrollHeight + diff)+16));
+ });
+ 
+</script>
