@@ -12,9 +12,9 @@
 $fr = array(
 	'webchat' => 'Web Chat',
     'com:webchat:menu' => 'Web Chat',
-    'com:webchat:homebutton' => 'Home',
-    'com:webchat:input:placeholder' => 'Type a message',
-    'com:webchat:menu:settings' => 'Settings',
-    'com:webchat:menu:addcontact' => 'Add contact'
+    'com:webchat:homebutton' => 'Accueil',
+    'com:webchat:input:placeholder' => 'Tapez un message',
+    'com:webchat:menu:settings' => 'Réglages',
+    'com:webchat:menu:addcontact' => 'Ajouter un contact'
 );
 ossn_register_languages('fr', $fr); 
