@@ -23,8 +23,8 @@ function unread_mesages_count_api_custom($hook, $type, $methods, $params) {
 
 //this section initilises webchat
 function web_chat() {
+	ossn_add_hook('services', 'methods', 'unread_mesages_count_api_custom');
     if(ossn_isLoggedin()) {
-		//ossn_add_hook('services', 'methods', 'unread_mesages_count_api_custom');
 		ossn_register_page('webchat', 'webchat_template_page');
 		ossn_register_page('chat_api', 'chat_api');
 		$icon          = ossn_site_url('components/OssnMessages/images/messages.png');
@@ -52,6 +52,5 @@ function webchat_redirect(){
 	redirect ("login");
 }
 
-ossn_register_callback('ossn', 'init', 'unread_messages_count_api');
 ossn_register_callback('ossn', 'init', 'web_chat');
 
