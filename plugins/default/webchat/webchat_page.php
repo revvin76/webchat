@@ -216,9 +216,6 @@ if ($recentMessages) {
 			</div>
 			<!--<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>-->
 			<div class="emojiPanel outBottom" tabindex="-1">
-			<?php 
-			include ( $_SERVER['DOCUMENT_ROOT'] . '/components/WebChat/plugins/default/webchat/emojiPanel.php');
-			?>
 			</div>
 		</div>
 	</div>
@@ -228,6 +225,17 @@ if ($recentMessages) {
 <script>   
 var notifs_running = false;
 var notifcount = '<?php echo (print_r(json_encode($notifcount),true)); ?>';
+
+$(function() {
+    $.ajax({
+	   type: 'GET',
+	   url: '<?php echo ( ossn_site_url("components/WebChat/plugins/default/webchat/emojiPanel.php"));?>',
+	   success: function(response)
+	   {
+		  $("#message-input .emojiPanel").html(response);
+	   }
+	});
+});
 
 $(".messages").animate({ scrollTop: $(document).height() }, "fast");
 
@@ -241,7 +249,7 @@ $(".expand-button").click(function() {
 });
 
 // Clicking an emoji
-$('#emojiContainer').on('click', '.visibleChar input', function () {
+$('.emojiPanel').on('click', '#emojiSelector .visibleChar input', function () {
     $(".message-input .wrap > textarea").val($(".message-input .wrap > textarea").val() + $(this).attr('value'));
 });
 
@@ -298,27 +306,29 @@ function newMessage() {
 	if (message.length==2 & message.codePointAt(0) > 1000 ) { lgemoji = "lg-emoji"}
 	
 	$('<li class="sent ' + lgemoji + '"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section class="message im">' + message + '</section><section class="message_time">Just now</section></article></li>').appendTo($('.messages ul'));
-	
+
+
 	// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
 	$('#main-input').val(null).blur();
 	$('#main-input').css("height","15px");
 	$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
 	
 	$('.contact.active .preview').html('<span>You: </span>' + message);
-	$(".messages").animate({ scrollTop: $(document).height() }, "fast");
 	activeContact = document.getElementById('activeContact').value;
 	
-	$.post("/chat_api",
+	$.post("<?php echo ossn_site_url('chat_api'); ?>",
 	{
 	  action: 'send',  
 	  from: <?php echo ossn_loggedin_user()->guid; ?>,
 	  to: activeContact,
 	  message: message
 	});
+	// Scroll to show the new message
+	$(".messages").animate({ scrollTop: $(document).height() }, "fast");
 };
 
 function listMessages(withguid){	
-	$.post( "/chat_api", { action: "messages", from: <?php echo ossn_loggedin_user()->guid; ?>, to: withguid })
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "messages", from: <?php echo ossn_loggedin_user()->guid; ?>, to: withguid })
      .done(function( data ) {
 		$("div.contact-profile").remove();
 		$("div.messages").remove();
@@ -334,7 +344,7 @@ function updateActive(newContact) {
 }
 
 function recentMessages(){	
-	$.post( "/chat_api", { action: "recent", to: <?php echo ossn_loggedin_user()->guid; ?> , active: document.getElementById('activeContact').value })
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "recent", to: <?php echo ossn_loggedin_user()->guid; ?> , active: document.getElementById('activeContact').value })
 	 .done(function( data ) {
 		$("div#contacts ul").remove();
 		$("div#contacts").html(data);
@@ -346,7 +356,7 @@ function checkNotifs(){
 		notifs_running = true; 
 		var activeContact_copy = document.getElementById('activeContact').value;
 		$.ajax({
-			url: '/chat_api',
+			url: '<?php echo ossn_site_url("chat_api"); ?>',
 			data: {action: "notifs", currentuser: activeContact_copy, guid: <?php echo ossn_loggedin_user()->guid;?> , notifs: notifcount},
 			type: 'POST',
 			dataType: 'json',
@@ -428,6 +438,27 @@ function checkNotifs(){
 };
 var running = false;
 
+var loadingMore = false
+function loadMore(offset) {
+	if (loadingMore === false) {
+	  loadingMore = true;
+	  $.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "moremessages", from: <?php echo ossn_loggedin_user()->guid; ?>, to: withguid, offset: offset+1 })
+	  .done(function( data ) {
+		$('#loadMore').remove();
+		
+		var d = $("div.messages");	
+		var old_height = d.prop("scrollHeight");  //store document height before modifications
+		var old_scroll = d.scrollTop(); //remember the scroll position
+		$("div.messages ul").prepend(data);
+		d.scrollTop(old_scroll + d.prop("scrollHeight") - old_height); //restore "scroll position"
+		}); // done
+	  
+	  var d = $("div.messages");		
+	  d.find("ul span").data('page',parseInt(offset)+1);
+	  notifs_running = false;
+	  loadingMore = false;
+    }
+}
 setInterval(function() {
   // Check whether there are new mail notifications
 	if (running == false) {
@@ -441,13 +472,6 @@ $('.send').click(function() {
   newMessage();
   return false;
 });
-/* // Press ENTER to send
-$(window).on('keydown', function(e) {
-  if (e.which == 13) {
-    newMessage();
-    return false;
-  }
-}); */
 
 // automatically adjust size to fit content
 $('#main-input').on('input', function () {
@@ -465,5 +489,5 @@ $('#main-input').on('input', function () {
 
 		$("#frame .content .message-input .wrap .fa").css("bottom",-(Math.max(minHeight, this.scrollHeight + diff)+16));
  });
- 
+
 </script>
