@@ -23,14 +23,22 @@ header('Content-type: text/html; charset=UTF-8');?>
 #emojiSelector div.emocat div.hiddenChar {display:none;}
 #emojiSelector div.emocat div.visibleChar {
     float: left;
-    width: 4%;
-    height: 17%;
+    width: 20%;
+    height: 30%;
+}
+#emojiSelector div.emocat div.visibleChar:focused {
+	border:none;
+	outline: -webkit-focus-ring-color auto 0px;
 }
 @media screen and (max-width: 735px) {
 	#emojiSelector div.emocat div.visibleChar {
 		float: left;
-		width: 7%;
-		height: 15%;
+		width: 20%;
+		height: 30%;
+	}
+	#emojiSelector div.emocat div.visibleChar:focused {
+		border:none;
+		outline: -webkit-focus-ring-color auto 0px;
 	}
 }
 #emojiSelector div.emocat div.visibleChar > input[type=text] {
@@ -38,6 +46,10 @@ header('Content-type: text/html; charset=UTF-8');?>
     width: 100%;
     height: 100%;
 	padding: 0;
+	font-size: 1.9em;
+}
+#emojiSelector div.emocat div.visibleChar > input:focused {
+	border:none;
 }
 #emojiSelector div.emocat div.visibleChar > span {display:none;}
 
