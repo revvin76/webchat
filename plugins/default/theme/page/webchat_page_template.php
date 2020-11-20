@@ -27,7 +27,7 @@ if (isset($params['contents'])) {
     <title><?php echo $title; ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="manifest" href="<?php echo ossn_site_url('components/WebChat/webchat.manifest');?>">
-	<meta name="theme-color" content="#3367D6">
+	<meta name="theme-color" content="#333">
     <link rel="icon" href="<?php echo ossn_add_cache_to_url(ossn_theme_url('images/favicon.ico'));?>" type="image/x-icon" />
 	<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
 	<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
@@ -42,7 +42,7 @@ if (isset($params['contents'])) {
 <button class="add-button">Add to home screen</button>
  <?php echo $contents; ?>
 <script>
-// Code to handle install prompt on desktop
+/* // Code to handle install prompt on desktop
 
 let deferredPrompt;
 const addBtn = document.querySelector('.add-button');
@@ -71,7 +71,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
         deferredPrompt = null;
       });
   });
-});
+}); */
 </script>
 </body>
 </html>
