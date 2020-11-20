@@ -136,6 +136,10 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 		<div class="messages">
 			<ul>');
 				if ($listMessages->payload->count > 0) {
+					$maxPages = ceil($listMessages->payload->count / 10);
+					if ($maxPages > 1) {
+						echo '<span id="loadMore" data-page="0"> ^^^ load more ^^^</span>';
+					}
 					foreach($listMessages->payload->list as $message)
 					{
 						// Lets check if its a single emoji, and if so make it bigger
@@ -158,7 +162,45 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 					};
 				}
 		echo  ('	</ul>
-		</div>');
+		</div>
+		<script>$(".messages").on("scroll", function() {
+		if (($(this).scrollTop() == 0) && ($.isNumeric(($("#loadMore").data("page"))))) {
+			$("#loadMore").html("Loading more messages...");
+			loadMore($("#loadMore").data("page"));
+		}})</script>');
+}
+
+if ((input('action') !== null) && (input('action') == 'moremessages')) {
+  	$with = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
+	$user2 = ossn_user_by_guid($with);
+ 	
+	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->guid, 'offset' => input('offset'));
+	$listMessages = CallAPI ($listURL , $listPARAM); 
+
+	$maxPages = ceil($listMessages->payload->count / 10);
+	if ($listMessages->payload->offset < $maxPages) {
+		echo '<span id="loadMore" data-page="' . $listMessages->payload->offset . '">^^^ load more ^^^</span>';
+	}
+	foreach($listMessages->payload->list as $message)
+	{
+		// Lets check if its a single emoji, and if so make it bigger
+		$lgemoji = "";
+		// Check the message contains a single unicode character
+		if ((strlen(html_entity_decode($message->message)) == 4) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
+			$lgemoji = "lg-emoji";														
+		}
+
+		if ($message->message_from->guid == ossn_loggedin_user()->guid) {
+			echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
+			echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
+			echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+		} else {
+			echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
+			echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
+			echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+		}
+		$data .= '</li>';
+	};
 }
 
 if ((input('action') !== null) && (input('action') == 'recent')) {
