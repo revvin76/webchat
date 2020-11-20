@@ -625,6 +625,12 @@ body {
 #frame .content .messages::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.3);
 }
+
+#frame .content .messages ul span#loadMore {
+  text-align: center;
+  display: block;
+  margin-top: 15px;	
+}
 #frame .content .messages ul li {
   display: inline-block;
   clear: both;
