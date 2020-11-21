@@ -138,7 +138,7 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 				if ($listMessages->payload->count > 0) {
 					$maxPages = ceil($listMessages->payload->count / 10);
 					if ($maxPages > 1) {
-						echo '<span id="loadMore" data-page="0"> ^^^ load more ^^^</span>';
+						echo '<span id="loadMore" data-page="1"> ^^^ load more ^^^</span>';
 					}
 					foreach($listMessages->payload->list as $message)
 					{

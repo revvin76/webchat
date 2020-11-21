@@ -270,29 +270,6 @@ $("#emojiPanel").click(function(e) {
 	$(".emojiPanel").removeClass("outBottom");
 });
 			
-// $("#status-options ul li").click(function() {
-	// $("#profile-img").removeClass();
-	// $("#status-online").removeClass("active");
-	// $("#status-away").removeClass("active");
-	// $("#status-busy").removeClass("active");
-	// $("#status-offline").removeClass("active");
-	// $(this).addClass("active");
-	
-	// if($("#status-online").hasClass("active")) {
-		// $("#profile-img").addClass("online");
-	// } else if ($("#status-away").hasClass("active")) {
-		// $("#profile-img").addClass("away");
-	// } else if ($("#status-busy").hasClass("active")) {
-		// $("#profile-img").addClass("busy");
-	// } else if ($("#status-offline").hasClass("active")) {
-		// $("#profile-img").addClass("offline");
-	// } else {
-		// $("#profile-img").removeClass();
-	// };
-	
-	// $("#status-options").removeClass("active");
-// });
-
 function newMessage() {
 	$(".emojiPanel").addClass("outBottom");
 	$(".emojiPanel").removeClass("onFromBottom");
@@ -324,7 +301,8 @@ function newMessage() {
 	  message: message
 	});
 	// Scroll to show the new message
-	$(".messages").animate({ scrollTop: $(document).height() }, "fast");
+	var d = $("div.messages");		
+	$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
 };
 
 function listMessages(withguid){	
@@ -361,23 +339,12 @@ function checkNotifs(){
 			type: 'POST',
 			dataType: 'json',
 			success:  function(returnedData) {
-				//console.log ("Success: " + JSON.stringify(returnedData.success));
 				if (returnedData.success === true){
 					var oldPayload = JSON.stringify(JSON.parse(notifcount).payload);
 					var newPayload = JSON.stringify(JSON.parse(JSON.stringify(returnedData.payload.payload)));
-					// console.log ("*************************************************");
-					// console.log (oldPayload);
-					// console.log ("-------------------------------------------------");
-					// console.log (JSON.stringify(returnedData.debug));
-					// console.log (newPayload);
-					// if (newPayload === oldPayload) console.log ("MATCH"); else console.log ("NO MATCH");
-					// console.log ("returnedData.current_chat: " + JSON.stringify(returnedData.current_chat));
-					// console.log ("/////////////////////////////////////////////////");
 					
 					if (newPayload != oldPayload) {
-						//console.log ("Current_chat=" + returnedData.current_chat);
 						if (returnedData.current_chat == true){
-							//console.log ('Matched the current chat, so updating the current view.');
 							listMessages (document.getElementById('activeContact').value);
 						}
 
@@ -387,11 +354,8 @@ function checkNotifs(){
 								if (item.length){
 									$.each(item, function(thread, v) {
 										if ( $("#contacts ul").find( "#" + item[thread].message_from + " .contact-new").length ) {
-											// console.log ("Contact id" + item[thread].message_from + "already has a notification icon, no need to add one.");
 										} else {								
-											// console.log ("Contact id" + item[thread].message_from + "needs a notification icon.");
 											if (returnedData.current_chat == true && item[thread].message_from === activeContact_copy){
-												// console.log ('Matched the current chat, so not flagging an unseen message.');
 											} else {
 												unseen_notification = true;
 											};
