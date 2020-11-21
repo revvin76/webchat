@@ -1,0 +1,14 @@
+fieldset.admin-pwa div.form-group {
+	width: 50%;
+	float: left;
+}
+fieldset.admin-pn div.form-group {
+	width: 100%;
+	float: left;
+}
+@media screen and (max-width: 735px) {
+	fieldset.admin-pwa div.form-group {
+		width: 100%;
+		float: left;
+	}
+}

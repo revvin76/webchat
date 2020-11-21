@@ -13,9 +13,6 @@
 define('__WEB_CHAT__', ossn_route()->com . 'WebChat/');
 
 //this section initialises the API extensions
-function unread_messages_count_api() {
-	ossn_add_hook('services', 'methods', 'unread_mesages_count_api_custom');
-}
 function unread_mesages_count_api_custom($hook, $type, $methods, $params) {
 		$methods['v1.0'][] = 'unread_mesages_count_custom';
 		return $methods;
@@ -24,7 +21,16 @@ function unread_mesages_count_api_custom($hook, $type, $methods, $params) {
 //this section initilises webchat
 function web_chat() {
 	ossn_add_hook('services', 'methods', 'unread_mesages_count_api_custom');
+
     if(ossn_isLoggedin()) {
+		$component = new OssnComponents;
+		$settings = $component->getComSettings('webchat');
+		
+		if(ossn_isAdminLoggedin()) {
+			ossn_register_action('webchat/admin/settings', __WEBCHATADMIN__ . 'actions/webchat/admin/settings.php');
+			ossn_register_com_panel('webchat', 'settings');
+		}
+		
 		ossn_register_page('webchat', 'webchat_template_page');
 		ossn_register_page('chat_api', 'chat_api');
 		$icon          = ossn_site_url('components/OssnMessages/images/messages.png');
