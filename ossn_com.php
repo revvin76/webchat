@@ -21,11 +21,12 @@ function unread_mesages_count_api_custom($hook, $type, $methods, $params) {
 //this section initilises webchat
 function web_chat() {
 	ossn_add_hook('services', 'methods', 'unread_mesages_count_api_custom');
+	ossn_extend_view('css/ossn.default', 'css/main');
 
     if(ossn_isLoggedin()) {
 		$component = new OssnComponents;
 		$settings = $component->getComSettings('webchat');
-		
+				
 		if(ossn_isAdminLoggedin()) {
 			ossn_register_action('webchat/admin/settings', __WEBCHATADMIN__ . 'actions/webchat/admin/settings.php');
 			ossn_register_com_panel('webchat', 'settings');
