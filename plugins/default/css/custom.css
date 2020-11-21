@@ -406,7 +406,7 @@ body {
 }
 @media screen and (max-width: 735px) {
   #frame #sidepanel #contacts ul li.contact {
-    padding: 6px 0 46px 8px;
+    padding: 6px 0 46px 10px;
   }
 }
 #frame #sidepanel #contacts ul li.contact:hover {
@@ -419,12 +419,7 @@ body {
 #frame #sidepanel #contacts ul li.contact.active span.contact-status {
   border: 2px solid #32465a !important;
 }
-#frame #sidepanel #contacts ul li.contact i.contact-new {
-    float: right;
-    position: absolute;
-	right: 0.2em;
-	border: none;
-}
+
 #frame #sidepanel #contacts ul li.contact .wrap {
   width: 88%;
   margin: 0 auto;
@@ -433,17 +428,23 @@ body {
 @media screen and (max-width: 735px) {
   #frame #sidepanel #contacts ul li.contact .wrap {
     width: 100%;
+	display: contents;
   }
 }
 #frame #sidepanel #contacts ul li.contact .wrap span {
   position: absolute;
-  left: 0;
+  left: 0px;
   margin: -2px 0 0 -2px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   border: 2px solid #2c3e50;
   background: #95a5a6;
+}
+@media screen and (max-width: 735px) {
+	#frame #sidepanel #contacts ul li.contact .wrap span {
+		left:10px;
+	}
 }
 #frame #sidepanel #contacts ul li.contact .wrap span.online {
   background: #2ecc71;
@@ -466,13 +467,13 @@ body {
   }
 }
 #frame #sidepanel #contacts ul li.contact .wrap .meta {
-  padding: 5px 0 0 0;
+  padding: 5px 0 0 5px;
 }
-/* @media screen and (max-width: 735px) { */
-  /* #frame #sidepanel #contacts ul li.contact .wrap .meta { */
-    /* display: none; */
-  /* } */
-/* } */
+@media screen and (max-width: 735px) {
+  #frame #sidepanel #contacts ul li.contact .wrap .meta {
+      float: left;
+  }
+}
 #frame #sidepanel #contacts ul li.contact .wrap .meta .name {
   font-weight: 600;
 }
@@ -496,6 +497,42 @@ body {
   padding: 0 2px 0 0;
   margin: 0 0 0 1px;
   opacity: .5;
+}
+#frame #sidepanel #contacts ul li.contact .wrap .meta .preview i {
+    padding-right: 5px;
+    font-size: 0.1em;
+    vertical-align: middle;
+    padding-bottom: 2.1px;
+}
+#frame #sidepanel #contacts ul li.contact .wrap .meta .preview .sent-unread {
+	color: #7b7b7b;
+}
+#frame #sidepanel #contacts ul li.contact .wrap .meta .preview .sent-read {
+	color: #8bdbf9;
+}
+#frame #sidepanel #contacts ul li.contact .wrap i.contact-new {
+    float: right;
+    position: absolute;
+	right: 25px;
+	border: none;
+	bottom:0px;
+}
+@media screen and (max-width: 735px) {
+  #frame #sidepanel #contacts ul li.contact .wrap i.contact-new {
+    bottom: 15px;
+  }
+}
+#frame #sidepanel #contacts ul li.contact .wrap section.message_time {
+    display: block;
+    float: right;
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 0.6em;
+	padding-top: 5px;
+}
+#frame #sidepanel #contacts ul li.contact.active .wrap section.message_time {
+    right: 20px;
 }
 #frame #sidepanel #bottom-bar {
   position: absolute;
@@ -638,6 +675,18 @@ body {
   margin: 15px 15px 5px 15px;
   width: calc(100% - 25px);
   font-size: 0.9em;
+}
+#frame .content .messages ul li.sent article i {
+    padding-right: 5px;
+    font-size: 0.1em;
+    vertical-align: middle;
+    padding-bottom: 2.1px;
+}
+#frame .content .messages ul li.sent article .sent-unread {
+	color: #7b7b7b;
+}
+#frame .content .messages ul li.sent article .sent-read {
+	color: #8bdbf9;
 }
 #frame .content .messages ul li.lg-emoji article section:first-child {
   font-size: 3em;
