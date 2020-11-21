@@ -149,10 +149,17 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 							$lgemoji = "lg-emoji";														
 						}
 
+						// Check whether the most recent message to contact has been viewed
+						if ($message->viewed == 0) {
+							$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
+						} else {
+							$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
+						}
+						
 						if ($message->message_from->guid == ossn_loggedin_user()->guid) {
 							echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
 							echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section>' . $tick . '</article>';
 						} else {
 							echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
 							echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
@@ -179,7 +186,7 @@ if ((input('action') !== null) && (input('action') == 'moremessages')) {
 
 	$maxPages = ceil($listMessages->payload->count / 10);
 	if ($listMessages->payload->offset < $maxPages) {
-		echo '<span id="loadMore" data-page="' . $listMessages->payload->offset . '">^^^ load more ^^^</span>';
+		echo '<span id="loadMore" data-page="' . $listMessages->payload->offset . '">more</span>';
 	}
 	foreach($listMessages->payload->list as $message)
 	{
@@ -189,11 +196,17 @@ if ((input('action') !== null) && (input('action') == 'moremessages')) {
 		if ((strlen(html_entity_decode($message->message)) == 4) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
 			$lgemoji = "lg-emoji";														
 		}
+		// Check whether the most recent message to contact has been viewed
+		if ($message->viewed == 0) {
+			$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
+		} else {
+			$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
+		}
 
 		if ($message->message_from->guid == ossn_loggedin_user()->guid) {
 			echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
 			echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-			echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+			echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section>' . $tick . '</article>';
 		} else {
 			echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
 			echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
@@ -215,9 +228,11 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 					if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
 						$current_message = $messageThread->message_from;
 						$withguid = $messageThread->message_from->guid;
+						$sent=false;
 					} else {
 						$current_message = $messageThread->message_to;
-						$withguid = $messageThread->message_to->guid;						
+						$withguid = $messageThread->message_to->guid;		
+						$sent=true;						
 					}
 					echo '<li class="contact';
 					if ($withguid == input('active')) echo " active";
@@ -225,15 +240,28 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 						<div class="wrap">		
 							<span class="contact-status ' . checkStatus($withguid) . '"></span>';
 							
-							if ($messageThread->viewed == 0) {
-								echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
-							}
+					// Check whether the most recent unread message was to or from
+					if ($messageThread->viewed == 0 && ( $messageThread->message_to->guid == ossn_loggedin_user()->guid )) {
+						echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
+					}
+					
+					// Check whether the most recent message to contact has been viewed
+					if ($sent==true) {
+						if ($messageThread->viewed == 0) {
+							$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
+						} else {
+							$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
+						}
+					}
 							
 					echo '<img src="' . $current_message->icon->small . '" alt="" />
 							<div class="meta">
 								<p class="name">' . $current_message->username . '</p>
-								<p class="preview">' . $current_message->message . '</p>
+								<p class="preview">';
+								if ($sent) echo $tick;
+								echo	$messageThread->message . '</p>
 							</div>
+							<section class="message_time">'. elapsed_time($messageThread->time) . '</section>							
 						</div>
 					</li>';
 					$i++;

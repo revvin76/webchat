@@ -112,25 +112,41 @@ if ($recentMessages) {
 						if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
 							$current_message = $messageThread->message_from;
 							$withguid = $messageThread->message_from->guid;
+							$sent=false;
 						} else {
 							$current_message = $messageThread->message_to;
 							$withguid = $messageThread->message_to->guid;						
+							$sent=true;
 						}
+
 						echo '<li class="contact';
 						if ($i==0) echo " active";
 						echo '" id="'. $withguid .'">
 							<div class="wrap">		
 								<span class="contact-status ' . checkStatus($withguid) . '"></span>';
 								
-								if ($messageThread->viewed == 0) {
-									echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
-								}
+						// Check whether the most recent unread message was to or from
+						if ($messageThread->viewed == 0 && ( $messageThread->message_to->guid == ossn_loggedin_user()->guid )) {
+							echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
+						}
+						
+						// Check whether the most recent message to contact has been viewed
+						if ($sent==true) {
+							if ($messageThread->viewed == 0) {
+								$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
+							} else {
+								$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
+							}
+						}
 								
 						echo '<img src="' . $current_message->icon->small . '" alt="" />
 								<div class="meta">
 									<p class="name">' . $current_message->username . '</p>
-									<p class="preview">' . $current_message->message . '</p>
+									<p class="preview">';
+									if ($sent) echo $tick;
+									echo	$messageThread->message . '</p>
 								</div>
+								<section class="message_time">'. elapsed_time($messageThread->time) . '</section>
 							</div>
 						</li>';
 						$activeFriends[] = $withguid;
@@ -282,7 +298,7 @@ function newMessage() {
 	var lgemoji = null;
 	if (message.length==2 & message.codePointAt(0) > 1000 ) { lgemoji = "lg-emoji"}
 	
-	$('<li class="sent ' + lgemoji + '"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section class="message im">' + message + '</section><section class="message_time">Just now</section></article></li>').appendTo($('.messages ul'));
+	$('<li class="sent ' + lgemoji + '"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section class="message im">' + message + '</section><section class="message_time">Just now</section><i class="fa fa-circle sent-unread" aria-hidden="true"></i></article></li>').appendTo($('.messages ul'));
 
 
 	// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
@@ -290,7 +306,9 @@ function newMessage() {
 	$('#main-input').css("height","15px");
 	$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
 	
-	$('.contact.active .preview').html('<span>You: </span>' + message);
+	//$('.contact.active .preview').html('<i class="fa fa-circle sent-unread" aria-hidden="true"></i>' + message);
+	recentMessages();
+	
 	activeContact = document.getElementById('activeContact').value;
 	
 	$.post("<?php echo ossn_site_url('chat_api'); ?>",
