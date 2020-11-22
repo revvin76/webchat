@@ -7,7 +7,7 @@
     <license>GNU General Public License, version 2</license>
     <author_url>http://www.kjbtech.co.uk/</author_url>
     <license_url>http://www.opensource-socialnetwork.org/licence/</license_url>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
 	<requires>
 		<type>ossn_version</type>
 		<version>5.5</version>
@@ -21,5 +21,10 @@
 		<type>ossn_component</type>
 		<name>OssnServices</name>
 		<version>6.4</version>
+	</requires>	
+	<requires>
+		<type>ossn_component</type>
+		<name>PrivateNetwork</name>
+		<version>5.3</version>
 	</requires>	
 </component>
