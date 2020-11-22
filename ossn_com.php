@@ -54,11 +54,9 @@ function web_chat() {
 	}
 }
 function webchat_template_page(){
-	if(ossn_isAdminLoggedin()) {
-    	$content = ossn_plugin_view('webchat/webchat_page');
-		$title = 'Chat';
-    	echo ossn_view_page($title, $content, 'webchat_page_template');	
-	}
+	$content = ossn_plugin_view('webchat/webchat_page');
+	$title = 'Chat';
+	echo ossn_view_page($title, $content, 'webchat_page_template');	
 }
 function chat_api(){
     	$content = ossn_plugin_view('webchat/chat_api');
