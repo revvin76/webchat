@@ -15,7 +15,7 @@ $fr = array(
     'com:webchat:homebutton' => 'Accueil',
     'com:webchat:input:placeholder' => 'Tapez un message',
     'com:webchat:menu:settings' => 'Réglages',
-    'com:webchat:menu:addcontact' => 'Ajouter un contact'
+    'com:webchat:menu:addcontact' => 'Ajouter un contact',
 	
 	'com:webchat:admin:title' => 'WebChat Dashboard',
 	'com:webchat:admin:subtitle' => 'This dashboard is not yet functional, and is just a placeholder for future implementation.',
