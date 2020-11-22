@@ -25,6 +25,6 @@
 	<requires>
 		<type>ossn_component</type>
 		<name>PrivateNetwork</name>
-		<version>5.3</version>
+		<version>5.4</version>
 	</requires>	
 </component>
