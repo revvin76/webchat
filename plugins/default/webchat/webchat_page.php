@@ -139,12 +139,14 @@ if ($recentMessages) {
 							}
 						}
 								
+						$preview = $messageThread->message;
+						if (strlen($preview) >= 30) $preview=substr($preview,0,30) . "...";		
 						echo '<img src="' . $current_message->icon->small . '" alt="" />
 								<div class="meta">
 									<p class="name">' . $current_message->username . '</p>
 									<p class="preview">';
 									if ($sent) echo $tick;
-									echo	$messageThread->message . '</p>
+									echo	$preview . '</p>
 								</div>
 								<section class="message_time">'. elapsed_time($messageThread->time) . '</section>
 							</div>
@@ -211,11 +213,7 @@ if ($recentMessages) {
 			});</script>			
 			<img src="<?php echo $user2->payload->icon->small;?>" alt="<?php echo $user2->payload->fullname;?>" />
 			<p><?php echo $user2->payload->first_name;?></p>
-			<div class="media-options">
-				<i class="fa fa-video-camera" aria-hidden="true"></i>
-				<i class="fa fa-phone" aria-hidden="true"></i>
-				<i class="fa fa-ellipsis-v" aria-hidden="true"></i>
-			</div>
+
 		</div>
 		<div id="messages" class="messages">
 			<ul>
@@ -224,19 +222,43 @@ if ($recentMessages) {
 		</div>
 		<div id="message-input" class="message-input">
 			<div class="wrap">
+				<i class="fa fa-smile-o emoji" aria-hidden="true" id="emojiPanel"></i>
 				<textarea id="main-input" type="text" rows="1" cols="40" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>"></textarea>
 				<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
 				<i class="fa fa-camera camera" aria-hidden="true"></i>
 				<i class="fa fa-paper-plane send" aria-hidden="true"></i>
-				<i class="fa fa-smile-o emoji" aria-hidden="true" id="emojiPanel"></i>
 			</div>
-			<!--<button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>-->
 			<div class="emojiPanel outBottom" tabindex="-1">
 			</div>
 		</div>
 	</div>
 </div>
 <audio id="newmessage" src="<?php echo ossn_site_url("components/OssnSounds/audios/pling.mp3"); ?>" type="audio/mp3"></audio>
+<div class="clones" hidden>
+			<div class="media-options">
+				<i class="fa fa-video-camera" aria-hidden="true"></i>
+				<i class="fa fa-phone" aria-hidden="true"></i>
+				<i class="fa fa-ellipsis-v message-menu" aria-hidden="true"></i>
+				<div id="message-menu" class="dropdown-content">
+					<ul>
+					<li id="view-user-btn">View User Details</li>
+					<li id="report-user-btn">Report User</li>
+					<li id="block-user-btn">Block User</li>
+					<li id="clear-chat-btn">Clear Chat</li>
+					</ul>
+				</div>
+			</div>
+</div>
+<div class="cd-popup" role="alert">
+   <div class="cd-popup-container">
+      <p>Are you sure you want to delete this element?</p>
+      <ul class="cd-buttons">
+         <li class="dialog-yes">Yes</li>
+         <li class="dialog-no">Cancel</li>
+      </ul>
+   </div> <!-- cd-popup-container -->
+</div> <!-- cd-popup -->
+<div class="cd-popup-fade"></div>
 
 <script>   
 var notifs_running = false;
@@ -264,9 +286,57 @@ $(".expand-button").click(function() {
 	$("#contacts").toggleClass("expanded");
 });
 
+// Message Menu Buttons ///////////////////////////////////////////////////////////////////////////
+// View user
+$("#view-user-btn").click(function() {
+   $("#message-menu").removeClass("show");
+   $(".cd-popup p").html("Do you want to leave Web Chat to visit the users profile?");
+   $(".cd-popup").addClass("show");
+   $(".cd-popup-fade").addClass("show");
+});
+// Report user
+$("#report-user-btn").click(function() {
+   $("#message-menu").removeClass("show");
+   $(".cd-popup p").html("Do you really want to report this user?");
+   $(".cd-popup").addClass("show");
+   $(".cd-popup-fade").addClass("show");
+});
+// Block user
+$("#block-user-btn").click(function() {
+   // $block = ossn_site_url("action/block/user?user={$user->guid}", true);
+   $("#message-menu").removeClass("show");
+   $(".cd-popup p").html("Do you really want to block this user?");
+   var dataurl = "<?php echo ossn_site_url() . 'action/block/user?user=';?>" + $("#activeContact").val().toString();
+   $(".cd-popup ul li.dialog-yes").attr("data-url", dataurl );
+   $(".cd-popup").addClass("show");
+   $(".cd-popup-fade").addClass("show");   
+});
+// Clear chat
+$("#clear-chat-btn").click(function() {
+   $("#message-menu").removeClass("show");
+   $(".cd-popup p").html("Clear all messages?");
+   $(".cd-popup").addClass("show");
+   $(".cd-popup-fade").addClass("show");   
+});
+// Dismiss dialog
+$(".dialog-no").click(function() {
+   $(".cd-popup").removeClass("show");
+   $(".cd-popup-fade").removeClass("show");
+   $(".cd-popup ul li.dialog-yes").attr("href", "#");
+});
+
+
+
+
+
 // Clicking an emoji
 $('.emojiPanel').on('click', '#emojiSelector .visibleChar input', function () {
     $(".message-input .wrap > textarea").val($(".message-input .wrap > textarea").val() + $(this).attr('value'));
+});
+
+// Clicking message menu
+$('.media-options .message-menu').on('click', function () {
+	$('#message-menu').toggleClass('show');
 });
 
 // Clicking outside of the emoji selection panel makes it disappear			
@@ -304,6 +374,7 @@ function newMessage() {
 	// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
 	$('#main-input').val(null).blur();
 	$('#main-input').css("height","15px");
+	$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
 	$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
 	
 	//$('.contact.active .preview').html('<i class="fa fa-circle sent-unread" aria-hidden="true"></i>' + message);
@@ -331,12 +402,13 @@ function listMessages(withguid){
 		$("div.content").prepend(data);
 		var d = $("div.messages");
 		d.scrollTop(d.prop("scrollHeight"));
+		$( ".clones .media-options" ).clone(true,true).appendTo( ".contact-profile" );
      });
 	 notifs_running = false;
 };
 
 function updateActive(newContact) {
-	document.getElementById('activeContact').value = newContact;
+	$("#activeContact").val(newContact);
 }
 
 function recentMessages(){	
@@ -455,21 +527,24 @@ $('.send').click(function() {
   return false;
 });
 
+var inputStartHeight = parseInt($('#main-input').css("height"),10);
+var miniHeight = 5;
+var idiff = inputStartHeight - miniHeight;
 // automatically adjust size to fit content
 $('#main-input').on('input', function () {
 // compute the height difference which is caused by border and outline
         var outerHeight = parseInt(window.getComputedStyle(this).height, 10);
         var diff = outerHeight - this.clientHeight;
 		var minHeight = 15;
-
+	
         // set the height to 0 in case of it has to be shrinked
         this.style.height = 0;
 
         // set the correct height
         // this.scrollHeight is the full height of the content, not just the visible part
         this.style.height = Math.max(minHeight, this.scrollHeight + diff) + 'px';
-
-		$("#frame .content .message-input .wrap .fa").css("bottom",-(Math.max(minHeight, this.scrollHeight + diff)+16));
+		$("#frame .content .message-input .wrap i").css("padding-top",(parseInt(this.style.height,10) - idiff) + "px");
+		
  });
 
 </script>
