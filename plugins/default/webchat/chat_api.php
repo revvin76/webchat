@@ -127,11 +127,6 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 			});</script>			
 			<img src="' . $user2->iconURL()->smaller . '" alt="' . $user2->fullname . '" />
 			<p>' . $user2->first_name . '</p>
-			<div class="media-options">
-				<i class="fa fa-video-camera" aria-hidden="true"></i>
-				<i class="fa fa-phone" aria-hidden="true"></i>
-				<i class="fa fa-ellipsis-v" aria-hidden="true"></i>
-			</div>
 		</div>
 		<div class="messages">
 			<ul>');
@@ -253,13 +248,15 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 							$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
 						}
 					}
-							
+					
+					$preview = $messageThread->message;
+					if (strlen($preview) >= 30) $preview=substr($preview,0,30) . "...";
 					echo '<img src="' . $current_message->icon->small . '" alt="" />
 							<div class="meta">
 								<p class="name">' . $current_message->username . '</p>
 								<p class="preview">';
 								if ($sent) echo $tick;
-								echo	$messageThread->message . '</p>
+								echo	$preview . '</p>
 							</div>
 							<section class="message_time">'. elapsed_time($messageThread->time) . '</section>							
 						</div>
