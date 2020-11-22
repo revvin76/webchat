@@ -139,31 +139,7 @@ $settings = $component->getComSettings('webchat');
 </div>
 </fieldset>
 
-<!-- ************************************ PRIVATE NETWORK ***************************************-->
-<!-- Form Name -->
-<legend><?php echo ossn_print('com:webchat:admin:privatenetwork');?></legend>
-<fieldset class="admin-pn">
-<!-- Multiple Radios -->
-<div class="form-group">
-  <label class="col-md-4 control-label" for="private_network_array"><?php echo ossn_print('com:webchat:admin:privatenetwork:label');?></label>
-  <div class="col-md-8">
-  <div class="radio">
-    <label for="private_network_array-0">
-      <input type="radio" name="private_network_array" id="private_network_array-0" value="true">
-<?php echo ossn_print('com:webchat:admin:privatenetwork:true');?>
-    </label>
-	</div>
-  <div class="radio">
-    <label for="private_network_array-1">
-      <input type="radio" name="private_network_array" id="private_network_array-1" value="false" checked="checked">
-<?php echo ossn_print('com:webchat:admin:privatenetwork:false');?>
-    </label>
-	</div>
-  </div>
-</div>
-</fieldset>
-
-<!-- ************************************ PRIVATE NETWORK ***************************************-->
+<!-- ************************************ GIPHY API ***************************************-->
 <!-- Form Name -->
 <legend><?php echo ossn_print('com:webchat:admin:giphy');?></legend>
 <fieldset class="admin-pwa">
