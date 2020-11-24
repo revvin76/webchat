@@ -45,8 +45,6 @@ function checkStatus($guidToCheck) {
 	}
 	return false;
 }	
-
-
 function returnFriendStatuses() {
 	$friends = ossn_loggedin_user()->getFriends();
 	if(!$friends) {
@@ -137,6 +135,9 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 					}
 					foreach($listMessages->payload->list as $message)
 					{
+						// GIPHY
+						$json = json_decode(html_entity_decode($message->message),true);
+
 						// Lets check if its a single emoji, and if so make it bigger
 						$lgemoji = "";
 						// Check the message contains a single unicode character
@@ -146,30 +147,42 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 
 						// Check whether the most recent message to contact has been viewed
 						if ($message->viewed == 0) {
-							$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
+							$tick='<i class=\'fa fa-circle sent-unread\' aria-hidden=\'true\'></i>';
 						} else {
-							$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
+							$tick='<i class=\'fa fa-circle sent-read\' aria-hidden=\'true\'></i>';
 						}
 						
-						if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-							echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
-							echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section>' . $tick . '</article>';
+						if ($json[img]) {
+							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
+								echo '<script>$( ".clones .sent.giphy" ).clone(true,true).html("<img src=\"'. ossn_loggedin_user()->iconURL()->small .'\" alt=\"\" /><article class=\"giphy\"><section class=\"message im\"><img class=\"giphy\" og=\"'. $json[bigImg] .'\" src=\"' . $json[img] . '\"/></section><section class=\"message_time\">'. elapsed_time($message->time) .'</section>' . $tick . '</article>").appendTo($(".messages ul"));</script>';
+							} else {
+								echo '<script>$( ".clones .received.giphy" ).clone(true,true).html("<img src=\"'. ossn_loggedin_user()->iconURL()->small .'\" alt=\"\" /><article class=\"giphy\"><section class=\"message im\"><img class=\"giphy\" og=\"'. $json[bigImg] .'\" src=\"' . $json[img] . '\"/></section><section class=\"message_time\">'. elapsed_time($message->time) .'</section></article>").appendTo($(".messages ul"));</script>';
+							}
 						} else {
-							echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
-							echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
-							echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
-						}
-						$data .= '</li>';
+							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
+								echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
+								echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
+								echo  '<article><section class="message">'.$message->message.'</section><section class="message_time">' . elapsed_time($message->time) . '</section>' . $tick . '</article>';
+							} else {
+								echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
+								echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
+								echo  '<article><section class="message">'.$message->message.'</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+							}
+							$data .= '</li>';
+					}
 					};
 				}
 		echo  ('	</ul>
 		</div>
-		<script>$(".messages").on("scroll", function() {
-		if (($(this).scrollTop() == 0) && ($.isNumeric(($("#loadMore").data("page"))))) {
-			$("#loadMore").html("Loading more messages...");
-			loadMore($("#loadMore").data("page"));
-		}})</script>');
+		<script>
+		$(".messages").on("scroll", function() {
+			if (($(this).scrollTop() == 0) && ($.isNumeric(($("#loadMore").data("page"))))) {
+				$("#loadMore").html("Loading more messages...");
+				loadMore($("#loadMore").data("page"));
+			}
+		})
+
+		</script>');
 }
 
 if ((input('action') !== null) && (input('action') == 'moremessages')) {
