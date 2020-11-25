@@ -1,5 +1,5 @@
 <?php
-$giphyAPI = "&api_key=zlfz9EbHMUWBNZHzQabnGiz3upiAwDSN";
+$giphyAPI = "&api_key=";
 $giphyOptions = "&limit=1";
 // $giphyEndpoint = "http://api.giphy.com/v1/gifs/search?q=";
 $giphyEndpoint = "http://api.giphy.com/v1/gifs/trending?";
