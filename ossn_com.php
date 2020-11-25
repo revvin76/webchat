@@ -10,19 +10,16 @@
  */
 //setting up path so we can use it in entire file 
 //if your component folder have upper and lower case characters please use same here.
-define('__WEB_CHAT__', ossn_route()->com . 'WebChat/');
-
+define('__WEB_CHAT__', ossn_route()->com . 'webchat/');
 //this section initialises the API extensions
 function unread_mesages_count_api_custom($hook, $type, $methods, $params) {
 		$methods['v1.0'][] = 'unread_mesages_count_custom';
 		return $methods;
 }
-
 function com_webchat_extend_private_network($hook, $type, $allowed_pages, $params) {
     $allowed_pages[0][] = 'chat_api';    // pages to be addressed by 1 path element
     return $allowed_pages;
 }
-
 //this section initilises webchat
 function web_chat() {
 	ossn_add_hook('services', 'methods', 'unread_mesages_count_api_custom');
@@ -36,7 +33,7 @@ function web_chat() {
 				
 		// Register the admin dashboard for administrators		
 		if(ossn_isAdminLoggedin()) {
-			ossn_register_action('webchat/admin/settings', __WEBCHATADMIN__ . 'actions/webchat/admin/settings.php');
+			ossn_register_action('webchat/admin/settings', __WEB_CHAT__ . 'actions/webchat/admin/settings.php');
 			ossn_register_com_panel('webchat', 'settings');
 		}		
 
@@ -62,6 +59,20 @@ function chat_api(){
     	$content = ossn_plugin_view('webchat/chat_api');
 		echo $content;	
 }
+function intercept_giphy() {
+    ossn_add_hook('messages', 'message:smilify', 'giphy_template_config');
+    ossn_add_hook('chat', 'message:smilify', 'giphy_template_config');
+}
+function giphy_template_config($hook, $type, $text, $params) {
+	$json = json_decode(html_entity_decode($message->message),true);
+	if (isset($params['instance']->message)) {
+        $text = $params['instance']->message;
+        $json = json_decode(html_entity_decode($text),true);
+		if ($json['img']) return "Use WebChat to view GIPHY images";
+        return $text;
+    }
+}
 
+ossn_register_callback('ossn', 'init', 'intercept_giphy');
 ossn_register_callback('ossn', 'init', 'web_chat');
 
