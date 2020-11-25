@@ -50,6 +50,6 @@ $en = array(
 	'com:webchat:admin:false' => 'No',
 	'com:webchat:admin:giphy' => 'GIPHY Integration',
 	'com:webchat:admin:giphy:api' => 'API Key',
-	'com:webchat:admin:giphy:save' => 'Save Settings',
+	'com:webchat:admin:giphy:save' => 'Save',
 );
 ossn_register_languages('en', $en); 
