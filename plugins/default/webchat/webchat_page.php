@@ -103,94 +103,6 @@ if ($recentMessages) {
 		</div> -->
 		<div id="contacts">
 			<ul>
-				<?php 
-				$i = 0;
-				$activeFriends = [];
-				if ($recentMessages->payload->count > 0) {
-					foreach($recentMessages->payload->list as $messageThread)
-					{
-						if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
-							$current_message = $messageThread->message_from;
-							$withguid = $messageThread->message_from->guid;
-							$sent=false;
-						} else {
-							$current_message = $messageThread->message_to;
-							$withguid = $messageThread->message_to->guid;						
-							$sent=true;
-						}
-
-						echo '<li class="contact';
-						if ($i==0) echo " active";
-						echo '" id="'. $withguid .'">
-							<div class="wrap">		
-								<span class="contact-status ' . checkStatus($withguid) . '"></span>';
-								
-						// Check whether the most recent unread message was to or from
-						if ($messageThread->viewed == 0 && ( $messageThread->message_to->guid == ossn_loggedin_user()->guid )) {
-							echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
-						}
-						
-						// Check whether the most recent message to contact has been viewed
-						if ($sent==true) {
-							if ($messageThread->viewed == 0) {
-								$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
-							} else {
-								$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
-							}
-						}
-								
-						$preview = $messageThread->message;
-						if (strlen($preview) >= 30) $preview=substr($preview,0,30) . "...";		
-						echo '<img src="' . $current_message->icon->small . '" alt="" />
-								<div class="meta">
-									<p class="name">' . $current_message->username . '</p>
-									<p class="preview">';
-									if ($sent) echo $tick;
-									echo	$preview . '</p>
-								</div>
-								<section class="message_time">'. elapsed_time($messageThread->time) . '</section>
-							</div>
-						</li>';
-						$activeFriends[] = $withguid;
-						$i++;
-					}
-				};
-				if ($friends) {
-					foreach ($friends as $friend) {
-						if (!in_array($friend->guid,$activeFriends)) {
-							echo '<li class="contact';
-							echo '" id="'. $friend->guid .'">
-								<div class="wrap">		
-									<span class="contact-status ' . checkStatus($friend->guid) . '"></span>';
-							echo '<img src="' . $friend->iconURL()->smaller . '" alt="" />
-									<div class="meta">
-										<p class="name">' . $friend->username . '</p>
-										<p class="preview">' . $friend->message . '</p>
-									</div>
-								</div>
-							</li>';
-						}
-					}
-				}
-				?>
-				<script>
-				$(function() {
-					$('li.contact').click(function() {
-					  $('li.contact').removeClass("active");
-					  $(this).find(".contact-new").remove();
-					  $(this).addClass("active");
-					  withguid = $(this).attr('id');
-					  updateActive(withguid);
-					  listMessages(withguid);
-					  setTimeout(function(){
-						  $("#sidepanel").removeClass("onFromLeft");
-						  $("#sidepanel").addClass("outLeft");
-						  $("#frame .content").removeClass("outRight");
-						  $("#frame .content").addClass("onFromRight");
-					  });
-					});
-				});	
-				</script>
 			</ul>
 		</div>
 		<div id="bottom-bar">
@@ -213,11 +125,22 @@ if ($recentMessages) {
 			});</script>			
 			<img src="<?php echo $user2->payload->icon->small;?>" alt="<?php echo $user2->payload->fullname;?>" />
 			<p><?php echo $user2->payload->first_name;?></p>
-
+			<div class="media-options">
+				<i class="fa fa-video-camera" aria-hidden="true"></i>
+				<i class="fa fa-phone" aria-hidden="true"></i>
+				<i class="fa fa-ellipsis-v message-menu" aria-hidden="true"></i>
+				<div id="message-menu" class="dropdown-content">
+					<ul>
+					<li id="view-user-btn">View User Details</li>
+					<li id="report-user-btn">Report User</li>
+					<li id="block-user-btn">Block User</li>
+					<li id="clear-chat-btn">Clear Chat</li>
+					</ul>
+				</div>
+			</div>
 		</div>
 		<div id="messages" class="messages">
-			<ul>
-				<!-- no need to display message content on first load. This will be populated when you click on a contact -->
+			<ul id="messageList">
 			</ul>
 		</div>
 		<div id="message-input" class="message-input">
@@ -236,9 +159,13 @@ if ($recentMessages) {
 </div>
 <audio id="newmessage" src="<?php echo ossn_site_url("components/OssnSounds/audios/pling.mp3"); ?>" type="audio/mp3"></audio>
 <div class="clones" hidden>
-			<li class="sent giphy"></li>
-			<li class="received giphy"></li>
+			<li class="sent giphy" data-id=""></li>
+			<li class="replies giphy" data-id=""></li>
+			<li class="sent std" data-id=""></li>
+			<li class="replies std" data-id=""></li>
+			<li class="contact"></li>
 			<div class="giphy-img"></div>
+			<span id="loadMore" data-page="0">more</span>
 			<div class="media-options">
 				<i class="fa fa-video-camera" aria-hidden="true"></i>
 				<i class="fa fa-phone" aria-hidden="true"></i>
@@ -267,6 +194,7 @@ if ($recentMessages) {
   <div class="giphy-fs-dismiss"><i class="fa fa-times" aria-hidden="true"></i></div>
   <div class="giphy-fs-image"></div>
 </div>
+<div id="loader"></div>
 
 <script>   
 var notifs_running = false;
@@ -275,7 +203,7 @@ var notifcount = '<?php echo (print_r(json_encode($notifcount),true)); ?>';
 $(function() {
     $.ajax({
 	   type: 'GET',
-	   url: '<?php echo ( ossn_site_url("components/WebChat/plugins/default/webchat/emojiPanel.php"));?>',
+	   url: '<?php echo ( ossn_site_url("components/webchat/plugins/default/webchat/emojiPanel.php"));?>',
 	   success: function(response)
 	   {
 		  $("#message-input .emojiPanel").html(response);
@@ -283,17 +211,27 @@ $(function() {
 	});
     $.ajax({
 	   type: 'GET',
-	   url: '<?php echo ( ossn_site_url("components/WebChat/plugins/default/webchat/giphyPanel.php"));?>',
+	   url: '<?php echo ( ossn_site_url("components/webchat/plugins/default/webchat/giphyPanel.php"));?>',
 	   success: function(response)
 	   {
 		  $("#message-input .giphyPanel").html(response);
-		  $("#message-input .giphyPanel div.giphy-logo img").attr("src","<?php echo ossn_site_url("components/WebChat/plugins/default/img/XEPINdXA.png"); ?>");
+		  $("#message-input .giphyPanel div.giphy-logo img").attr("src","<?php echo ossn_site_url("components/webchat/plugins/default/img/XEPINdXA.png"); ?>");
 	   }
 	});
+	recentMessages();
 });
 
 $(".messages").animate({ scrollTop: $(document).height() }, "fast");
 
+var scrollPos = 0;
+$(".messages").on("scroll", function() {
+	scrollPos = $(this).scrollTop();
+	if (($(this).scrollTop() == 0) && ($.isNumeric(($("div.messages #loadMore").data("page"))))) {
+		$("div.messages #loadMore").html("Loading more messages...");
+		loadMore($("div.messages #loadMore").data("page"));
+	}
+})
+		
 $("#profile-img").click(function() {
 	$("#status-options").toggleClass("active");
 });
@@ -352,6 +290,23 @@ $('.media-options .message-menu').on('click', function () {
 	$('#message-menu').toggleClass('show');
 });
 
+// Click a contact to open the messages
+$('li.contact').click(function() {
+  $('li.contact').removeClass("active");
+  $(this).find(".contact-new").remove();
+  $(this).addClass("active");
+  withguid = $(this).attr('id');
+  updateActive(withguid);
+  $("#messages ul").empty();
+  listMessages(withguid);
+  setTimeout(function(){
+	  $("#sidepanel").removeClass("onFromLeft");
+	  $("#sidepanel").addClass("outLeft");
+	  $("#frame .content").removeClass("outRight");
+	  $("#frame .content").addClass("onFromRight");
+  });
+});
+	
 ///////////////////////////////GIPHY//////////////////////////
 // Clicking GIPHY button
 $("#giphyPanel").click(function(e) {
@@ -359,7 +314,7 @@ $("#giphyPanel").click(function(e) {
 	$(".giphyPanel").removeClass("outBottom");
 	$(".emojiPanel").addClass("outBottom");
 	$(".emojiPanel").removeClass("onFromBottom");	
-		var xhr = $.get("<?php echo ( ossn_site_url("components/WebChat/plugins/default/webchat/giphy.php"));?>");
+		var xhr = $.get("<?php echo ( ossn_site_url("components/webchat/plugins/default/webchat/giphy.php"));?>");
 		xhr.done(function(data) {
 			$('#giphySelector .results').html("");
 			var json_response = JSON.parse(data);
@@ -406,14 +361,14 @@ $('div.giphy-img').on('click', function () {
 		  action: 'send',  
 		  from: <?php echo ossn_loggedin_user()->guid; ?>,
 		  to: activeContact,
-		  message: message
+		  message: message,
+		  giphy: true,
 		});
 	
 });
 // Click GIPHY image in thread
 $("li.sent.giphy").click(function() {
 	var giphyFull = $(this).find("img.giphy").attr("og");
-	console.log ($(this).find("img.giphy"));
    $(".giphy-fs-container .giphy-fs-image").html("<img src='" + giphyFull + "'>");
    $(".giphy-fs-container").addClass("show");
 });
@@ -422,8 +377,6 @@ $(".giphy-fs-container .giphy-fs-dismiss i").click(function() {
    $(".giphy-fs-container .giphy-fs-image").html('');
    $(".giphy-fs-container").removeClass("show");
 });
-
-
 // Clicking outside of the emoji selection panel makes it disappear			
 $( "body" ).click(function( event ) {
 	var target = $(event.target);    
@@ -485,28 +438,192 @@ function newMessage() {
 	$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
 };
 
-function listMessages(withguid){	
-	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "messages", from: <?php echo ossn_loggedin_user()->guid; ?>, to: withguid })
+function listMessages(withguid, offset = 1){
+	$("#loader").addClass("show");
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "messages", from: <?php echo ossn_loggedin_user()->guid; ?>, to: withguid, offset: offset })
      .done(function( data ) {
-		$("div.contact-profile").remove();
-		$("div.messages").remove();
-		$("div.content").prepend(data);
-		var d = $("div.messages");
-		d.scrollTop(d.prop("scrollHeight"));
-		$( ".clones .media-options" ).clone(true,true).appendTo( ".contact-profile" );
+		// $("div.contact-profile").remove();
+		// $("div.messages").remove();
+		// $("div.content").prepend(data);
+		// var d = $("div.messages");
+		// d.scrollTop(d.prop("scrollHeight"));
+		//$( ".clones .media-options" ).clone(true,true).appendTo( ".contact-profile" );
+		if (data != 'null') {
+		  updateMessages(data, offset);
+		} else {
+			$("div.messages ul").empty();
+		}
      });
 	 notifs_running = false;
+	 $("#loader").removeClass("show");
 };
 
+function updateMessages (data, offset) {
+	// Must receive a json payload containing all the messages. Will update the message thread, and contact name/picture
+	var obj = jQuery.parseJSON( data );
+	
+	var d = $(".messages");
+	// Capture the current scroll position
+	var old_height = d.prop("scrollHeight");;  //store document height before modifications
+
+	// If this is the first page of messages, reset the thread
+	if (offset == 0) {
+		$("div.messages ul").empty();
+	}
+
+	// Find the most recent message, and delete any you've posted since
+	// var mostRecentID = 0;
+	// $('.messages ul li').each(function() {
+		// mostRecentID = Math.max(this.id, mostRecentID);
+	// });
+	// $('#' + mostRecentID).nextAll('li').remove();
+
+	// Find the first message index that we need to start adding to the screen
+	// var closest = null;
+	// console.log (obj[0]);
+	// $.each(obj, function(index,message){
+	  // if (closest == null || Math.abs(message.id - mostRecentID) < Math.abs(closest - mostRecentID)) {
+		// closest = message.id;
+		// firstMessage = index;
+	  // }
+	// });
+
+	// Reverse the message order if neccessary
+	if (obj.maxpages > 1 ) {
+		if (obj.page) {
+			if (obj.page >= 1) {
+				obj.messages = obj.messages.reverse();
+			}
+		}
+	}
+		
+	//Now start adding the messages to the screen
+	$.each(obj.messages, function(index, message) {
+		// if (index >= firstMessage) {
+			
+			var litype = 'std';
+			var messagehtml = '<img src="';
+			if (message.direction == 'sent') {
+				messagehtml += obj.user1icon;
+			} else {
+				messagehtml += obj.user2icon;
+			};
+			messagehtml += '" alt="" /><article';
+			if (message.json == 'true') { 
+				litype = 'giphy';
+				messagehtml += ' class="giphy"';
+				messagehtml += '><section class="message"><img class="giphy" og="' + message.giphyOriginal + '" src=\"' + message.giphyPreview + '"/>';
+			} else {
+				messagehtml += '><section class="message">' + message.message;
+			}
+			messagehtml += '</section><section class="message_time">' + message.elapsed + '</section>';
+			if (message.direction == 'sent') {
+				if (message.viewed == 0) {
+					messagehtml += '<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
+				} else {
+					messagehtml += '<i class="fa fa-circle sent-read" aria-hidden="true"></i>';	
+				}
+			}
+			messagehtml += '</article>';
+			
+			if (parseInt(obj.page,10) == 1) {
+				$( ".clones ." + message.direction + "." + litype).clone(true,true).html(messagehtml).attr("data-id",message.id).prependTo($(".messages ul"));
+			} else {
+				$( ".clones ." + message.direction + "." + litype).clone(true,true).html(messagehtml).attr("data-id",message.id).prependTo($(".messages ul"));				
+			}
+		// }
+	});
+
+	// Check whether to display a "load more" prompt
+	if (obj.maxpages > 1 ) {
+		if (obj.page) {
+			if (obj.page > 0) reversed = obj.messages.reverse();
+			if (parseInt(obj.page,10) < obj.maxpages) 
+				$(".clones #loadMore").clone(true,true).attr("data-page",parseInt(obj.page,10) + 1).html("more").prependTo($(".messages ul"));
+		} else {
+			$(".clones #loadMore").clone(true,true).attr("data-page","1").html("more").prependTo($(".messages ul"));
+		}
+	}	
+	
+	// Scroll to show the new message
+	if (offset == 0) {
+		$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
+	} else {
+		$(".messages").animate({ scrollTop: d.prop("scrollHeight") - old_height }, "fast");
+	}
+}
 function updateActive(newContact) {
+	// Update the contact details at the top of the screen
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "getuser", guid: newContact })
+	 .done(function( data ) {
+		try {
+		  var obj = $.parseJSON( data );
+		  $("div.contact-profile img").attr("src",obj.payload.icon.small);
+		  $("div.contact-profile p").html(obj.payload.fullname);
+		}
+		catch (err) {
+		  // Will be undefined on returning to contacts. Wont need to do anything
+		}
+	 });
 	$("#activeContact").val(newContact);
 }
 
 function recentMessages(){	
 	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "recent", to: <?php echo ossn_loggedin_user()->guid; ?> , active: document.getElementById('activeContact').value })
 	 .done(function( data ) {
-		$("div#contacts ul").remove();
-		$("div#contacts").html(data);
+		$("div#contacts ul").empty();
+		//$("div#contacts ul").html(data);
+		
+		obj = JSON.parse(data);
+		$.each(obj.payload.list, function(i,message) {
+				console.log (message);
+			 /*var newHTML = '<li class="contact';*/
+			if ( message.message_to.guid == <?php echo ossn_loggedin_user()->guid; ?>) {
+				var current_message = message.message_from;
+				var withguid = message.message_from.guid;
+				var sent=false;
+			} else {
+				var current_message = message.message_to;
+				var withguid = message.message_to.guid;		
+				var sent=true;	
+			}			
+			
+			if (withguid == $("#activeContact").val()) {
+				// newHTML += " active";
+			}
+			
+			// newHTML += '" id="' + withguid + '">
+			
+			newHTML = '<div class="wrap"><span class="contact-status ' + message.status + '"></span>';
+			
+			// Check whether the most recent unread message was to or from
+			if (message.viewed == 0 && ( message.message_to.guid == <?php echo ossn_loggedin_user()->guid; ?> )) {
+				newHTML += '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
+			}
+			
+			// Check whether the most recent message to contact has been viewed
+			if (sent==true) {
+				if (message.viewed == 0) {
+					var tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
+				} else {
+					var tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
+				}
+			}
+
+			var preview = message.message;
+			if (preview.length >= 30) preview=preview.substr(0,30) + "...";
+			newHTML += '<img src="' + current_message.icon.small + '" alt="" /><div class="meta"><p class="name">';
+			newHTML += current_message.username + '</p><p class="preview">';
+			if (sent) newHTML += tick;
+			if (preview[0] == '{') {
+				newHTML += '<i class=\"fa fa-picture-o giphy-preview\" aria-hidden=\"true\"></i>GIF';
+			} else {
+				newHTML +=  preview;
+			}
+			newHTML += '</p></div><section class="message_time">' + message.elapsed + '</section></div>';
+
+			$('.clones li.contact').clone(true,true).html(newHTML).attr("id",withguid).appendTo("#contacts ul"); 
+		});
 	 });
 };			
 				
@@ -587,19 +704,8 @@ var loadingMore = false
 function loadMore(offset) {
 	if (loadingMore === false) {
 	  loadingMore = true;
-	  $.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "moremessages", from: <?php echo ossn_loggedin_user()->guid; ?>, to: withguid, offset: offset+1 })
-	  .done(function( data ) {
-		$('#loadMore').remove();
-		
-		var d = $("div.messages");	
-		var old_height = d.prop("scrollHeight");  //store document height before modifications
-		var old_scroll = d.scrollTop(); //remember the scroll position
-		$("div.messages ul").prepend(data);
-		d.scrollTop(old_scroll + d.prop("scrollHeight") - old_height); //restore "scroll position"
-		}); // done
-	  
-	  var d = $("div.messages");		
-	  d.find("ul span").data('page',parseInt(offset)+1);
+	  $('div.messages #loadMore').remove();
+	  listMessages (withguid,offset);
 	  notifs_running = false;
 	  loadingMore = false;
     }

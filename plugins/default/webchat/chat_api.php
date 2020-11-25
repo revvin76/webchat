@@ -59,16 +59,16 @@ function returnFriendStatuses() {
 	return json_encode($friendStatuses);
 }
 
+if ((input('action') !== null) && (input('action') == 'getuser')) {
+	$userPARAM = array( 'api_key_token' => $apiKey , 'guid' => input('guid'));
+	$userDetails = CallAPI ($userURL , $userPARAM);
+	echo json_encode($userDetails);
+	exit;
+}
 if ((input('action') !== null) && (input('action') == 'send')) {
     $from = filter_var(input('from'), FILTER_SANITIZE_NUMBER_INT);
     $to = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
-	
-/* 	error_log('Raw Message received by chat_api: ' . PHP_EOL . print_r(input('message'),true) . PHP_EOL );
-	
-	$addPARAM = array( 'api_key_token' => $apiKey , 'from' => $from,'to' => $to, 'message' => input('message'));
-	$addMessage = CallAPI ($addURL , $addPARAM);
-	return $addMessage; */
-	
+
 	$send = new OssnMessages;
 
 	$nl2br = str_ireplace(array("\r\n","\r","\n",'\r','\n'),'<br />', input("message"));
@@ -96,8 +96,6 @@ if ((input('action') !== null) && (input('action') == 'send')) {
 	} else {
 		echo 0;
 	}
-//messages only at some points #470
-// don't mess with system ajax requests
 exit;
 
 }
@@ -107,34 +105,29 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 	$user2 = ossn_user_by_guid($with);
  	
 	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->guid, 'markallread' => 1);
+	if (input('offset')) $listPARAM['offset'] = input('offset'); 
 	$listMessages = CallAPI ($listURL , $listPARAM); 
-	//error_log('CallAPI() --> $listMessages [chat_api.php:line 68] : ' . PHP_EOL . print_r($listMessages,true) . PHP_EOL );
 
-	echo ('
-		<div class="contact-profile">
-			<div class="back-arrow">
-				<i class="fa fa-arrow-left" aria-hidden="true"></i>
-			</div>
-			<script>
-			$(".back-arrow").click(function() {
-				$("#sidepanel").removeClass("outLeft");
-				$("#sidepanel").addClass("onFromLeft");
-				$("#frame .content").removeClass("onFromRight");
-				$("#frame .content").addClass("outRight");	
-				updateActive(-1);				
-			});</script>			
-			<img src="' . $user2->iconURL()->smaller . '" alt="' . $user2->fullname . '" />
-			<p>' . $user2->first_name . '</p>
-		</div>
-		<div class="messages">
-			<ul>');
 				if ($listMessages->payload->count > 0) {
 					$maxPages = ceil($listMessages->payload->count / 10);
 					if ($maxPages > 1) {
-						echo '<span id="loadMore" data-page="1"> ^^^ load more ^^^</span>';
+						// echo '<span id="loadMore" data-page="1"> ^^^ load more ^^^</span>';
 					}
+					$returnArray = array();
+					$returnArray['maxpages'] = $maxPages;
+					$returnArray['page'] = $listMessages->payload->offset;
+					$returnArray['user1icon'] = ossn_loggedin_user()->iconURL()->small;
+					$returnArray['user2icon'] = $user2->iconURL()->smaller;
+					$returnArray['user2name'] = $user2->first_name;
+					$returnArray['messages'] = array();
+					$returnMessages = array();
+					
 					foreach($listMessages->payload->list as $message)
 					{
+						$returnRecord = array();		
+						$returnRecord['id'] = json_decode($message->id);
+						$returnRecord['elapsed'] = elapsed_time($message->time);
+						
 						// GIPHY
 						$json = json_decode(html_entity_decode($message->message),true);
 
@@ -144,160 +137,61 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 						if ((strlen(html_entity_decode($message->message)) == 4) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
 							$lgemoji = "lg-emoji";														
 						}
-
+						$returnRecord['lgemoji']=$lgemoji;
+						
 						// Check whether the most recent message to contact has been viewed
 						if ($message->viewed == 0) {
-							$tick='<i class=\'fa fa-circle sent-unread\' aria-hidden=\'true\'></i>';
+							$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
 						} else {
-							$tick='<i class=\'fa fa-circle sent-read\' aria-hidden=\'true\'></i>';
+							$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
 						}
+						$returnRecord['viewed']=$message->viewed;
 						
-						if ($json[img]) {
+						if ($json['img']) {
+							$returnRecord['json']="true";
+							$returnRecord['giphyOriginal'] = $json[bigImg];
+							$returnRecord['giphyPreview'] = $json[img];
 							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-								echo '<script>$( ".clones .sent.giphy" ).clone(true,true).html("<img src=\"'. ossn_loggedin_user()->iconURL()->small .'\" alt=\"\" /><article class=\"giphy\"><section class=\"message im\"><img class=\"giphy\" og=\"'. $json[bigImg] .'\" src=\"' . $json[img] . '\"/></section><section class=\"message_time\">'. elapsed_time($message->time) .'</section>' . $tick . '</article>").appendTo($(".messages ul"));</script>';
+								$returnRecord['direction'] = "sent";
 							} else {
-								echo '<script>$( ".clones .received.giphy" ).clone(true,true).html("<img src=\"'. ossn_loggedin_user()->iconURL()->small .'\" alt=\"\" /><article class=\"giphy\"><section class=\"message im\"><img class=\"giphy\" og=\"'. $json[bigImg] .'\" src=\"' . $json[img] . '\"/></section><section class=\"message_time\">'. elapsed_time($message->time) .'</section></article>").appendTo($(".messages ul"));</script>';
+								$returnRecord['direction'] = "replies";
 							}
 						} else {
+							$returnRecord['json']="false";
+							$returnRecord['message'] = $message->message;
 							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-								echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
-								echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-								echo  '<article><section class="message">'.$message->message.'</section><section class="message_time">' . elapsed_time($message->time) . '</section>' . $tick . '</article>';
+								$returnRecord['direction'] = "sent";
 							} else {
-								echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
-								echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
-								echo  '<article><section class="message">'.$message->message.'</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
+								$returnRecord['direction'] = "replies";
 							}
-							$data .= '</li>';
-					}
+						}
+						$returnMessages[]=$returnRecord;
 					};
+					$returnArray['messages'] = $returnMessages;
 				}
-		echo  ('	</ul>
-		</div>
-		<script>
-		$(".messages").on("scroll", function() {
-			if (($(this).scrollTop() == 0) && ($.isNumeric(($("#loadMore").data("page"))))) {
-				$("#loadMore").html("Loading more messages...");
-				loadMore($("#loadMore").data("page"));
-			}
-		})
 
-		</script>');
-}
-
-if ((input('action') !== null) && (input('action') == 'moremessages')) {
-  	$with = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
-	$user2 = ossn_user_by_guid($with);
- 	
-	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->guid, 'offset' => input('offset'));
-	$listMessages = CallAPI ($listURL , $listPARAM); 
-
-	$maxPages = ceil($listMessages->payload->count / 10);
-	if ($listMessages->payload->offset < $maxPages) {
-		echo '<span id="loadMore" data-page="' . $listMessages->payload->offset . '">more</span>';
-	}
-	foreach($listMessages->payload->list as $message)
-	{
-		// Lets check if its a single emoji, and if so make it bigger
-		$lgemoji = "";
-		// Check the message contains a single unicode character
-		if ((strlen(html_entity_decode($message->message)) == 4) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
-			$lgemoji = "lg-emoji";														
-		}
-		// Check whether the most recent message to contact has been viewed
-		if ($message->viewed == 0) {
-			$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
-		} else {
-			$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
-		}
-
-		if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-			echo  '<li class="sent ' . $lgemoji . '" data-id="' . $message->id . '">';						
-			echo  '<img src="' . ossn_loggedin_user()->iconURLS->small . '" alt="" />';
-			echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section>' . $tick . '</article>';
-		} else {
-			echo  '<li class="replies ' . $lgemoji . '" data-id="' . $message->id . '">';
-			echo  '<img src="' . $user2->iconURL()->smaller . '" alt="" />';
-			echo  '<article><section class="message">' . $message->message . '</section><section class="message_time">' . elapsed_time($message->time) . '</section></article>';
-		}
-		$data .= '</li>';
-	};
+		echo json_encode($returnArray);
+		exit;
 }
 
 if ((input('action') !== null) && (input('action') == 'recent')) {
 	$recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
 	$recentMessages = CallAPI ($recentURL , $recentPARAM);
-
-	echo '	<ul>';	
-	if ($recentMessages->payload->count > 0) {
-			$i = 0;
-			foreach($recentMessages->payload->list as $messageThread)
-				{
-					if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
-						$current_message = $messageThread->message_from;
-						$withguid = $messageThread->message_from->guid;
-						$sent=false;
-					} else {
-						$current_message = $messageThread->message_to;
-						$withguid = $messageThread->message_to->guid;		
-						$sent=true;						
-					}
-					echo '<li class="contact';
-					if ($withguid == input('active')) echo " active";
-					echo '" id="'. $withguid .'">
-						<div class="wrap">		
-							<span class="contact-status ' . checkStatus($withguid) . '"></span>';
-							
-					// Check whether the most recent unread message was to or from
-					if ($messageThread->viewed == 0 && ( $messageThread->message_to->guid == ossn_loggedin_user()->guid )) {
-						echo '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
-					}
-					
-					// Check whether the most recent message to contact has been viewed
-					if ($sent==true) {
-						if ($messageThread->viewed == 0) {
-							$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
-						} else {
-							$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
-						}
-					}
-					
-					$preview = $messageThread->message;
-					if (strlen($preview) >= 30) $preview=substr($preview,0,30) . "...";
-					echo '<img src="' . $current_message->icon->small . '" alt="" />
-							<div class="meta">
-								<p class="name">' . $current_message->username . '</p>
-								<p class="preview">';
-								if ($sent) echo $tick;
-								echo	$preview . '</p>
-							</div>
-							<section class="message_time">'. elapsed_time($messageThread->time) . '</section>							
-						</div>
-					</li>';
-					$i++;
-				};
-				
-				
-			echo "<script>
-			$(function() {
-				$('li.contact').click(function() {
-				  $('li.contact').removeClass('active');
-				  $(this).find('.contact-new').remove();
-				  $(this).addClass('active');
-				  withguid = $(this).attr('id');
-				  updateActive(withguid);
-				  listMessages(withguid);
-					  setTimeout(function(){
-						  $('#sidepanel').removeClass('onFromLeft');
-						  $('#sidepanel').addClass('outLeft');
-						  $('#frame .content').removeClass('outRight');
-						  $('#frame .content').addClass('onFromRight');
-					  });
-				});
-			});	
-			</script>";
-	}
-	echo "</ul>";
+	
+ 	if ($recentMessages->payload->count > 0) {
+		$i = -1;	
+		foreach($recentMessages->payload->list as $messageThread) {
+			$i++;
+			if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
+				$withguid = $messageThread->message_from->guid;
+			} else {
+				$withguid = $messageThread->message_to->guid;		
+			}
+			$recentMessages->payload->list[$i]->status = checkStatus($withguid)?checkStatus($withguid):'offline';
+			$recentMessages->payload->list[$i]->elapsed = elapsed_time($messageThread->time);
+		}
+	} 
+	echo json_encode($recentMessages);
 }
 
 if ((input('action') !== null) && (input('action') == 'notifs')) {
