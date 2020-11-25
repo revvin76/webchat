@@ -26,6 +26,7 @@ function web_chat() {
 	ossn_extend_view('css/ossn.default', 'css/main');
 	ossn_add_hook('private:network', 'allowed:pages', 'com_webchat_extend_private_network');
 	ossn_register_page('webchat', 'webchat_template_page');
+	ossn_register_page('giphy', 'giphy_test');
 		
     if(ossn_isLoggedin()) {
 		$component = new OssnComponents;
@@ -54,6 +55,11 @@ function webchat_template_page(){
 	$content = ossn_plugin_view('webchat/webchat_page');
 	$title = 'Chat';
 	echo ossn_view_page($title, $content, 'webchat_page_template');	
+}
+function giphy_test(){
+	$content = ossn_plugin_view('webchat/giphy');
+	$title = 'Chat';
+	echo $content;
 }
 function chat_api(){
     	$content = ossn_plugin_view('webchat/chat_api');
