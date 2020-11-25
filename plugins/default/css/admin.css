@@ -1,14 +1,29 @@
-fieldset.admin-pwa div.form-group {
-	width: 50%;
-	float: left;
+.tab-content .tab-pane ul {
+    list-style: none;
+    width: 100%;
+    clear: both;
+    display: inline-block;
 }
-fieldset.admin-pn div.form-group {
-	width: 100%;
-	float: left;
+.tab-content .tab-pane ul li {
+    display: inline-block;
+    width: 45%;
+    float: left;
+	padding-right: 1em;
 }
-@media screen and (max-width: 735px) {
-	fieldset.admin-pwa div.form-group {
-		width: 100%;
-		float: left;
-	}
+.tab-content .tab-pane ul li.full {
+    width: 100%;
+}
+.tab-content .tab-pane hr {
+	clear:both;
+}
+ul.nav.nav-tabs .adminSaveBtn {
+	float:right;
+}
+.tab-content .tab-pane li.homebutton {
+	text-align:center;
+}
+.tab-content .tab-pane i.homebutton {
+	font-family: FontAwesome;
+	font-style: normal;
+	font-size: 4em;
 }

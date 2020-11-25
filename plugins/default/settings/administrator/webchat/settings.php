@@ -1,16 +1,11 @@
 <?php
 /**
- * Open Source Social Network
- *
- * @package   Open Source Social Network
- * @author    Open Social Website Core Team <info@softlab24.com>
- * @copyright (C) SOFTLAB24 LIMITED
- * @license   Open Source Social Network License (OSSN LICENSE)  http://www.opensource-socialnetwork.org/licence
- * @link      https://www.opensource-socialnetwork.org/
+ * This file determines what to display when you click the webchat admin button
+ * in the admin dashboard.
  */
  
-echo ossn_view_form('webchat/administrator/settings', array(
+echo ossn_view_form('administrator/settings', array(
     'action' => ossn_site_url() . 'action/webchat/admin/settings',
-    'component' => 'WebChat',
+    'component' => 'webchat',
     'class' => 'ossn-admin-form'	
-));
+), false);

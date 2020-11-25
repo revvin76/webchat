@@ -1,25 +1,28 @@
 <?php
 /**
- * Open Source Social Network
- *
- * @package   Open Source Social Network
- * @author    Open Social Website Core Team <info@softlab24.com>
- * @copyright (C) SOFTLAB24 LIMITED
- * @license   Open Source Social Network License (OSSN LICENSE)  http://www.opensource-socialnetwork.org/licence
- * @link      https://www.opensource-socialnetwork.org/
+ * This file receives form data from the dasbboard and updates the database
  */
+ 
+/**
+ * Set up the variables for the database fields 
+ */
+$giphyAPIKey = input('giphyAPIKey');
+ 
+// Create new instance of a component
 $component = new OssnComponents;
-$modes = array(
-		'off',
-		'on'
-);
-$compat_mode     = input('compatibility_mode');
-$close_anywhere  = input('close_anywhere');
-if(in_array($compat_mode, $modes) && in_array($close_anywhere, $modes)) {
-	if($component->setSettings('WebChat', array('compatibility_mode' => $compat_mode, 'close_anywhere' => $close_anywhere))) {
-		ossn_trigger_message(ossn_print('ossn:admin:settings:saved'));
-		redirect(REF);
-	}
+
+if($component->setSettings('webchat',
+		array(
+			'giphyAPIKey' => $giphyAPIKey
+		))){
+	if(ossn_site_settings('cache') == true) {
+		ossn_disable_cache();
+		ossn_create_cache();
+		ossn_trigger_message(ossn_print('cache:flushed'));
+	}		
+	ossn_trigger_message(ossn_print('ossn:admin:settings:saved'));
+	redirect(REF);
+} else {
+	ossn_trigger_message(ossn_print('ossn:admin:settings:save:error'), 'error');
+	redirect(REF);
 }
-ossn_trigger_message(ossn_print('ossn:admin:settings:save:error'), 'error');
-redirect(REF);
