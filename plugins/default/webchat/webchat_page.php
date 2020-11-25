@@ -73,7 +73,9 @@ if ($recentMessages) {
 	/* Store the current notification counts */
 	$notifcountPARAM = array( 'api_key_token' => $apiKey , 'guid' => $chatUser->guid);
 	$notifcount = CallAPI ($notifcountURL , $notifcountPARAM);
-
+	
+	$component = new OssnComponents;
+	$WebChat  = $component->getSettings("webchat");
 }
 
 ?>
@@ -84,7 +86,10 @@ if ($recentMessages) {
 	<div id="sidepanel">
 		<div id="profile">
 			<!--<div class="wrap">-->
-			<a href="<?php echo ossn_site_url('home'); ?>" class="button"><i class="fa fa-home fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:homebutton'); ?></span></a>
+			<?php 
+			  if ($WebChat->homeButton==1) {
+				  echo '<a href="' . ossn_site_url($WebChat->homeURL) . '" class="button"><i class="homebutton">&#x' . $WebChat->homeChar . '</i><span>' . ossn_print('com:webchat:homebutton') . '</span></a>';
+			  }?>
 				<!--<img id="profile-img" src="<?php //echo ossn_loggedin_user()->iconURLS->small; ?>" class="online" alt="" />
 				<p><?php //echo $chatUser->fullname; ?></p>
 				<div id="status-options">
@@ -153,7 +158,20 @@ if ($recentMessages) {
 				<i class="fa fa-paper-plane send" aria-hidden="true"></i>
 			</div>
 			<div class="emojiPanel outBottom" tabindex="-1"></div>
-			<div class="giphyPanel outBottom" tabindex="-1"></div>
+			<div class="giphyPanel outBottomGiphy" tabindex="-1">
+				<div id="giphySelector" class="giphys">
+					<div class="topbar">
+						<input class="giphy-input" placeholder="Search via Giphy" autocomplete="off"/>
+						<div class="giphy-logo">
+							<img src="<?php echo ossn_site_url("components/webchat/plugins/default/img/XEPINdXA.png"); ?>">
+						</div>
+					</div>
+					<div class="resultsContainer">
+						<div class="results left"><img src="<?php echo ossn_site_url("components/webchat/plugins/default/img/dV2TgmvQ.png"); ?>"></div>
+						<div class="results right"><img src="<?php echo ossn_site_url("components/webchat/plugins/default/img/dV2TgmvQ.png"); ?>"></div>
+					</div>
+				</div>			
+			</div>
 		</div>
 	</div>
 </div>
@@ -209,15 +227,15 @@ $(function() {
 		  $("#message-input .emojiPanel").html(response);
 	   }
 	});
-    $.ajax({
-	   type: 'GET',
-	   url: '<?php echo ( ossn_site_url("components/webchat/plugins/default/webchat/giphyPanel.php"));?>',
-	   success: function(response)
-	   {
-		  $("#message-input .giphyPanel").html(response);
-		  $("#message-input .giphyPanel div.giphy-logo img").attr("src","<?php echo ossn_site_url("components/webchat/plugins/default/img/XEPINdXA.png"); ?>");
-	   }
+
+	// Display the emojis for the selected category
+	$('#giphySelector span').click(function() {
+	  $('#giphySelector span').removeClass("activeCat");
+	  $(this).addClass("activeCat");
+	  $('div.giphycat div.visibleChar').removeClass("visibleChar").addClass("hiddenChar");	  
+	  $('#giphycat' + $(this).data('filter') + ' div').addClass("visibleChar").removeClass("hiddenChar");
 	});
+
 	recentMessages();
 });
 
@@ -310,36 +328,34 @@ $('li.contact').click(function() {
 ///////////////////////////////GIPHY//////////////////////////
 // Clicking GIPHY button
 $("#giphyPanel").click(function(e) {
-	$(".giphyPanel").addClass("onFromBottom").focus();
-	$(".giphyPanel").removeClass("outBottom");
+	$(".giphyPanel").addClass("onFromBottomGiphy").focus();
+	$(".giphyPanel").removeClass("outBottomGiphy");
 	$(".emojiPanel").addClass("outBottom");
 	$(".emojiPanel").removeClass("onFromBottom");	
-		var xhr = $.get("<?php echo ( ossn_site_url("components/webchat/plugins/default/webchat/giphy.php"));?>");
-		xhr.done(function(data) {
-			$('#giphySelector .results').html("");
-			var json_response = JSON.parse(data);
-			var i;
-			for (i = 0; i < 25; i++) {
-			  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.left'));
-			}
-			for (i = 25; i < 50; i++) {
-			  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.right'));
-			}
-			<!-- $.each(json_response.data), function(i, item) { -->
-			   <!-- console.log (json_response.data[i]); -->
-			<!-- }; -->
-		});
+	
+	var xhr = $.get('<?php echo ( ossn_site_url("giphy"));?>?action=trending');
+	xhr.done(function(data) {
+		$('#giphySelector .results').html("");
+		var json_response = JSON.parse(decodeURIComponent(data));
+		var i;
+		for (i = 0; i < 25; i++) {
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.left'));
+		}
+		for (i = 25; i < 50; i++) {
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.right'));
+		}
+	});
 });
 // Clicking GIPHY image from results
 $('div.giphy-img').on('click', function () {
-		if ($(".giphyPanel").hasClass("onFromBottom")) {
-			$(".giphyPanel").addClass("outBottom");
-			$(".giphyPanel").removeClass("onFromBottom");
+		if ($(".giphyPanel").hasClass("onFromBottomGiphy")) {
+			$(".giphyPanel").addClass("outBottomGiphy");
+			$(".giphyPanel").removeClass("onFromBottomGiphy");
 		}
 		var giphyImg = $(this).find("img").attr("src");
 		var giphyBig = $(this).find("img").attr("data-og");
 
-		$( ".clones .sent.giphy" ).clone(true,true).html('<img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article class="giphy"><section class="message im"><img class="giphy" src="' + giphyImg + '"/></section><section class="message_time">Just now</section><i class="fa fa-circle sent-unread" aria-hidden="true"></i></article>').attr("og",giphyBig).appendTo( $('.messages ul') );
+		$( ".clones .sent.giphy" ).clone(true,true).html('<img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article class="giphy"><section class="message im"><img class="giphy" og="' + giphyBig + '" src="' + giphyImg + '"/></section><section class="message_time">Just now</section><i class="fa fa-circle sent-unread" aria-hidden="true"></i></article>').attr("og",giphyBig).appendTo( $('.messages ul') );
 		// Scroll to show the new message
 		var d = $("div.messages");		
 		$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
@@ -377,6 +393,32 @@ $(".giphy-fs-container .giphy-fs-dismiss i").click(function() {
    $(".giphy-fs-container .giphy-fs-image").html('');
    $(".giphy-fs-container").removeClass("show");
 });
+// Typing in GIPHY
+function delay(callback, ms) {
+  var timer = 0;
+  return function() {
+    var context = this, args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      callback.apply(context, args);
+    }, ms || 0);
+  };
+}
+$('.giphyPanel .giphy-input').keyup( delay ( function(){
+   	var xhr = $.get('<?php echo ( ossn_site_url("giphy"));?>?action=search&query=' + $(this).val());
+	xhr.done(function(data) {
+		$('#giphySelector .results').html("");
+		var json_response = JSON.parse(decodeURIComponent(data));
+		var i;
+		for (i = 0; i < 25; i++) {
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.left'));
+		}
+		for (i = 25; i < 50; i++) {
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.right'));
+		}
+	});
+}, 500));
+
 // Clicking outside of the emoji selection panel makes it disappear			
 $( "body" ).click(function( event ) {
 	var target = $(event.target);    
@@ -385,9 +427,9 @@ $( "body" ).click(function( event ) {
 			$(".emojiPanel").addClass("outBottom");
 			$(".emojiPanel").removeClass("onFromBottom");
 		}
-		if ($(".giphyPanel").hasClass("onFromBottom")) {
-			$(".giphyPanel").addClass("outBottom");
-			$(".giphyPanel").removeClass("onFromBottom");
+		if ($(".giphyPanel").hasClass("onFromBottomGiphy")) {
+			$(".giphyPanel").addClass("outBottomGiphy");
+			$(".giphyPanel").removeClass("onFromBottomGiphy");
 		}
     }
 });
@@ -396,8 +438,8 @@ $( "body" ).click(function( event ) {
 $("#emojiPanel").click(function(e) {
 	$(".emojiPanel").addClass("onFromBottom").focus();
 	$(".emojiPanel").removeClass("outBottom");
-	$(".giphyPanel").addClass("outBottom");
-	$(".giphyPanel").removeClass("onFromBottom").focus();
+	$(".giphyPanel").addClass("outBottomGiphy");
+	$(".giphyPanel").removeClass("onFromBottomGiphy").focus();
 });
 			
 function newMessage() {
@@ -576,8 +618,7 @@ function recentMessages(){
 		
 		obj = JSON.parse(data);
 		$.each(obj.payload.list, function(i,message) {
-				console.log (message);
-			 /*var newHTML = '<li class="contact';*/
+			/*var newHTML = '<li class="contact';*/
 			if ( message.message_to.guid == <?php echo ossn_loggedin_user()->guid; ?>) {
 				var current_message = message.message_from;
 				var withguid = message.message_from.guid;

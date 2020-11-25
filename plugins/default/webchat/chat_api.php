@@ -7,6 +7,9 @@ $userURL = $siteURL."user_details?";
 $notifsURL = $siteURL."notifications_count?";
 $notifcountURL = $siteURL."unread_mesages_count_custom?";
 $recentURL = $siteURL."message_recent?";
+
+$component = new OssnComponents;
+$WebChat  = $component->getSettings("webchat");
 //******************************************************************************//
 function CallAPI ($url,$post) {
 	$ch = curl_init();

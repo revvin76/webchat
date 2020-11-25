@@ -16,6 +16,10 @@ $component = new OssnComponents;
 $settings = $component->getComSettings('webchat');
 if($settings) {
 	$giphyAPIKey = $settings->giphyAPIKey;
+	$giphyAPIKey = $settings->giphyAPIKey;
+	$homeChar    = $settings->homeChar;
+	$homeButton  = $settings->homeButton;
+	$homeURL     = $settings->homeURL;
 }
 ?>
 <link rel="stylesheet" href="<?php echo ossn_site_url('components/webchat/plugins/default/css/admin.css');?>" type='text/css'>
@@ -47,14 +51,14 @@ if($settings) {
 		  <li>
 			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homebutton');?></strong>
 		    <select name="homeButton" value="" class="form-control">
-		      <option value="1 <?php if ($homeButton == "1") echo "active"; ?>"><?php echo ossn_print('com:webchat:admin:true');?></option>
-		      <option value="0 <?php if ($homeButton == "0") echo "active"; ?>"><?php echo ossn_print('com:webchat:admin:false');?></option>
+		      <option value="1" <?php if ($homeButton == "1") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:true');?></option>
+		      <option value="0" <?php if ($homeButton == "0") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:false');?></option>
 		    </select>
 		  </li>
 
 		  <li>
 			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homeurl');?></strong>
-			<input name="homeChar" type="text" placeholder="f015" value="<?php echo $homeURL;?>" placeholder="<?php echo $homeURL;?>"/>
+			<input name="homeURL" type="text" placeholder="f015" value="<?php echo $homeURL;?>" placeholder="<?php echo $homeURL;?>"/>
 		  </li>
 		  <li>
 			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homechar');?></strong>
