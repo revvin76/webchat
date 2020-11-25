@@ -27,3 +27,16 @@ ul.nav.nav-tabs .adminSaveBtn {
 	font-style: normal;
 	font-size: 4em;
 }
+
+@media screen and (max-width: 735px) {
+  .tab-content .tab-pane ul li {
+    display: inline-block;
+    width: 100%;
+    float: left;
+    padding-right: 1em;
+  }
+	
+  .tab-content .tab-pane ul {
+    padding: 0;
+  	
+}
