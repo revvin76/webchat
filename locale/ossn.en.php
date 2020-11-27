@@ -56,5 +56,12 @@ $en = array(
 	'com:webchat:admin:giphy' => 'GIPHY Integration',
 	'com:webchat:admin:giphy:api' => 'API Key',
 	'com:webchat:admin:giphy:save' => 'Save',
+	
+	
+	'com:webchat:enabling_service_worker_failure' => 'Service worker enabling failure',
+	'com:webchat:manifest_file_missing' => 'This component cannot be enabled without favicons installed - please run <b>Configure->Favicons</b> first',
+	'com:webchat:account_settings_section_tab' => 'Site Application Installer',
+	'com:webchat:account_settings_section_button' => 'Add to home screen',
+	'com:webchat:account_settings_section_installed_message' => 'Application successfully installed. You can close your browser now and continue visiting this site by clicking the application icon on the home screen.', 
 );
 ossn_register_languages('en', $en); 
