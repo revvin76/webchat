@@ -88,7 +88,16 @@ if ($recentMessages) {
 			<!--<div class="wrap">-->
 			<?php 
 			  if ($WebChat->homeButton==1) {
-				  echo '<a href="' . ossn_site_url($WebChat->homeURL) . '" class="button"><i class="homebutton">&#x' . $WebChat->homeChar . '</i><span>' . ossn_print('com:webchat:homebutton') . '</span></a>';
+				  if ($WebChat->homeURL==1) echo '<a href="' . ossn_site_url($WebChat->homeURLPath) . '" class="button">';
+				  
+				  if ($WebChat->homeButtonStyle==0)echo '<i class="fa ' . $WebChat->homeChar . '"></i>';
+				  
+				  if ($WebChat->homeButtonStyle==1)echo '<img src="' . $WebChat->homeImgPath . '" alt=""/>';
+				  
+				  echo '<span>' . ossn_print('com:webchat:homebutton') . '</span>';
+				  
+				  if ($WebChat->homeURL==1) echo '</a>';
+				  
 			  }?>
 				<!--<img id="profile-img" src="<?php //echo ossn_loggedin_user()->iconURLS->small; ?>" class="online" alt="" />
 				<p><?php //echo $chatUser->fullname; ?></p>
@@ -153,8 +162,12 @@ if ($recentMessages) {
 				<i class="fa fa-smile-o emoji" aria-hidden="true" id="emojiPanel"></i>
 				<textarea id="main-input" type="text" rows="1" cols="40" placeholder="<?php echo ossn_print('com:webchat:input:placeholder'); ?>"></textarea>
 				<i class="fa fa-picture-o giphy-logo" aria-hidden="true" id="giphyPanel"></i>
-				<i class="fa fa-paperclip attachment" aria-hidden="true"></i>
-				<i class="fa fa-camera camera" aria-hidden="true"></i>
+				
+				<label for="image-upload">
+				  <i class="fa fa-camera camera" aria-hidden="true"></i>
+				</label>
+				<input id="image-upload" class="file-input" type="file" accept="image/*" />
+				
 				<i class="fa fa-paper-plane send" aria-hidden="true"></i>
 			</div>
 			<div class="emojiPanel outBottom" tabindex="-1"></div>
