@@ -181,6 +181,7 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 	$recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
 	$recentMessages = CallAPI ($recentURL , $recentPARAM);
 	
+	$recentMessages = addFriends($recentMessages);
  	if ($recentMessages->payload->count > 0) {
 		$i = -1;	
 		foreach($recentMessages->payload->list as $messageThread) {
@@ -225,32 +226,13 @@ if ((input('action') !== null) && (input('action') == 'notifs')) {
 		// If current_guid = -1, then we havent selected a chat to view yet, so we skip the below loops
 		if ($current_guid !== -1) {
 			$current_chat = true;
-			
-			//  Below logic should make sure the currently viewed thread is only updated if you receive a new message in it. Currently, the current thread will refresh no matter which thread receives a message.
-			// foreach ( $notifcount->payload as $updated_thread ) {
-				// if ( $current_guid == $updated_thread->message_from) {
-					// We've found notifications regarding the current chat, need to return whether the count has changed
-					// if ($notifs->payload) {
-						// foreach ($notifs->payload as $old_thread) {
-							// if ($updated_thread->message_from == $old_thread->message_from ) {
-								// if ( $updated_thread->total != $old_thread->total ) {
-									// $current_chat = true;
-								// }					
-							// }
-						// }
-					// } else {
-						// $current_chat = true;
-					// }
-				// }
-			// }
 		}
-		$debug=$current_chat;
 		$response = [ 
 		'success' => true,
 		'current_chat' => $current_chat,
 		'payload' => $notifcount,
 		'message' => 'Success',
-		'statuses' => $debug
+		'statuses' => returnFriendStatuses()
 		];
 		echo json_encode($response);
 		return true;
@@ -258,6 +240,60 @@ if ((input('action') !== null) && (input('action') == 'notifs')) {
 
 }
 
+function addFriends ($recentMessages) {
+		$friends = ossn_loggedin_user()->getFriends();
+	if(!$friends) {
+			return false;
+	}
+	
+	$guids = array();
+	foreach ($recentMessages->payload->list as $data) {
+		if (!in_array($data->message_from->guid, $guids)) $guids[] = intval($data->message_from->guid,10);
+		if (!in_array($data->message_to->guid, $guids)) $guids[] = intval($data->message_to->guid,10);
+	}
 
+	foreach($friends as $friend) {
+		if($friend instanceof OssnUser) {
+			if (!in_array($friend->guid,$guids)) {
+				$recentMessages->payload->list[] = 
+								array ("message_from" => array ( "guid" => $friend->guid,
+														 "fullname" => $friend->fullname,
+														 "username" => $friend->username,
+														 "icon" => array ( "small" => $friend->iconURL()->small )
+														),
+								"message_to" => array ( "guid" => $friend->guid,
+														 "fullname" => $friend->fullname,
+														 "username" => $friend->username,
+														 "icon" => array ( "small" => $friend->iconURL()->small )
+														),
+								"message" => "",
+								"viewed" => "",
+								"elapsed" => "" );
+			}
+		}
+		
+	}								
+	return ($recentMessages);
+}
 
+/// Useful function below just for debugging. Console.log the returned data to see whats happening.
+if ((input('action') !== null) && (input('action') == 'compare')) {
+		$friends = ossn_loggedin_user()->getFriends();
+	if(!$friends) {
+			return false;
+	}
+	
+	$guids = array();
+	foreach ($recentMessages->payload->list as $data) {
+		if (!in_array($data->message_from->guid, $guids)) $guids[] = intval($data->message_from->guid,10);
+		if (!in_array($data->message_to->guid, $guids)) $guids[] = intval($data->message_to->guid,10);
+	}
+
+	foreach($friends as $friend) {
+		if($friend instanceof OssnUser) {
+			echo print_r($friend->iconURL()->small);
+		}
+		
+	}								
+}
 			
