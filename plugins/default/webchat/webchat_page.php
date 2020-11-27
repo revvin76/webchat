@@ -99,22 +99,7 @@ if ($recentMessages) {
 				  if ($WebChat->homeURL==1) echo '</a>';
 				  
 			  }?>
-				<!--<img id="profile-img" src="<?php //echo ossn_loggedin_user()->iconURLS->small; ?>" class="online" alt="" />
-				<p><?php //echo $chatUser->fullname; ?></p>
-				<div id="status-options">
-					<ul>
-						<li id="status-online" class="active"><span class="status-circle"></span> <p>Online</p></li>
-						<li id="status-away"><span class="status-circle"></span> <p>Away</p></li>
-						<li id="status-busy"><span class="status-circle"></span> <p>Busy</p></li>
-						<li id="status-offline"><span class="status-circle"></span> <p>Offline</p></li>
-					</ul>
-				</div>
-			</div>-->
 		</div>
- 		<!--<div id="search">
-			<label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
-			<input type="text" placeholder="Search contacts..." />
-		</div> -->
 		<div id="contacts">
 			<ul>
 			</ul>
@@ -132,10 +117,12 @@ if ($recentMessages) {
 			<script>
 			$(".back-arrow").click(function() {
 				updateActive(-1);
+				recentMessages();
 				$("#sidepanel").removeClass("outLeft");
 				$("#sidepanel").addClass("onFromLeft");
 				$("#frame .content").removeClass("onFromRight");
 				$("#frame .content").addClass("outRight");
+
 			});</script>			
 			<img src="<?php echo $user2->payload->icon->small;?>" alt="<?php echo $user2->payload->fullname;?>" />
 			<p><?php echo $user2->payload->first_name;?></p>
@@ -210,6 +197,10 @@ if ($recentMessages) {
 					</ul>
 				</div>
 			</div>
+			<button class="siteappinstaller-install-button" >
+				<i class="fa fa-download fa-fw\" aria-hidden="true"></i>
+				<span><?php echo ossn_print('com:webchat:account_settings_section_button'); ?></span>
+			</button>			
 </div>
 <div class="cd-popup" role="alert">
    <div class="cd-popup-container">
@@ -231,7 +222,15 @@ if ($recentMessages) {
 var notifs_running = false;
 var notifcount = '<?php echo (print_r(json_encode($notifcount),true)); ?>';
 
+
 $(function() {
+	if (window.matchMedia('(display-mode: standalone)').matches) {
+		$('.siteappinstaller-install-button').hide();
+	}	
+	if ((window.matchMedia('(display-mode: browser)').matches) && (window.matchMedia('(max-width: 768px)').matches)) {
+		$("#frame #sidepanel #bottom-bar").css("bottom","55px");
+	}	
+
     $.ajax({
 	   type: 'GET',
 	   url: '<?php echo ( ossn_site_url("components/webchat/plugins/default/webchat/emojiPanel.php"));?>',
@@ -250,6 +249,7 @@ $(function() {
 	});
 
 	recentMessages();
+	// compareArrays();
 });
 
 $(".messages").animate({ scrollTop: $(document).height() }, "fast");
@@ -623,11 +623,16 @@ function updateActive(newContact) {
 	$("#activeContact").val(newContact);
 }
 
+function compareArrays(){	
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "compare" })
+.done(function( data ) {
+	console.log (data);
+})};
+
 function recentMessages(){	
 	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "recent", to: <?php echo ossn_loggedin_user()->guid; ?> , active: document.getElementById('activeContact').value })
 	 .done(function( data ) {
 		$("div#contacts ul").empty();
-		//$("div#contacts ul").html(data);
 		
 		obj = JSON.parse(data);
 		$.each(obj.payload.list, function(i,message) {
@@ -650,10 +655,7 @@ function recentMessages(){
 			
 			newHTML = '<div class="wrap"><span class="contact-status ' + message.status + '"></span>';
 			
-			// Check whether the most recent unread message was to or from
-			if (message.viewed == 0 && ( message.message_to.guid == <?php echo ossn_loggedin_user()->guid; ?> )) {
-				newHTML += '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
-			}
+
 			
 			// Check whether the most recent message to contact has been viewed
 			if (sent==true) {
@@ -668,7 +670,14 @@ function recentMessages(){
 			if (preview.length >= 30) preview=preview.substr(0,30) + "...";
 			newHTML += '<img src="' + current_message.icon.small + '" alt="" /><div class="meta"><p class="name">';
 			newHTML += current_message.username + '</p><p class="preview">';
-			if (sent) newHTML += tick;
+			if (sent) {
+				newHTML += tick;
+			} else {
+				// Check whether the most recent unread message was to or from
+				if (message.viewed == 0 && ( message.message_to.guid == <?php echo ossn_loggedin_user()->guid; ?> )) {
+					newHTML += '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
+				}
+			}
 			if (preview[0] == '{') {
 				newHTML += '<i class=\"fa fa-picture-o giphy-preview\" aria-hidden=\"true\"></i>GIF';
 			} else {
@@ -733,16 +742,19 @@ function checkNotifs(){
 					temp = JSON.parse(notifcount);
 					temp.payload = '[]';
 					notifcount= JSON.stringify(temp);
-					jQuery.each(JSON.parse(returnedData.statuses), function(i, val) {
-					  if (val == true) {
-						$('#' + i + ' div span.contact-status').addClass('online');
-						$('#' + i + ' div span.contact-status').removeClass('busy');
-					  } else {
-						$('#' + i + ' div span.contact-status').addClass('busy');
-						$('#' + i + ' div span.contact-status').removeClass('online');
-					  }
-					});
 				}
+
+				// Update everybodies status
+				jQuery.each(JSON.parse(returnedData.statuses), function(i, val) {
+				  if (val == true) {
+					$('#' + i + ' div span.contact-status').addClass('online');
+					$('#' + i + ' div span.contact-status').removeClass('busy');
+				  } else {
+					$('#' + i + ' div span.contact-status').addClass('busy');
+					$('#' + i + ' div span.contact-status').removeClass('online');
+				  }
+				});
+				
 				running=false;
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
@@ -798,4 +810,43 @@ $('#main-input').on('input', function () {
 		
  });
 
+// Homescreen installation
+if (/chrome/i.test(navigator.userAgent)) {
+	console.log ("Chrome detected. Adding button to menu.");
+	$(".clones .siteappinstaller-install-button").clone(true,true).appendTo($('#bottom-bar'));
+
+	var promptEvent; 
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        promptEvent = e;
+		console.log ("Removing 'disabled' attribute from button");
+		$('#siteappinstaller-install-button').removeAttr('disabled');
+		$('#siteappinstaller-install-button').show();
+        listenToUserAction();
+    });
+
+    function listenToUserAction() {
+		console.log ("listenToUserAction()");		
+        const installBtn = document.getElementById("siteappinstaller-install-button");
+        installBtn.addEventListener("click", presentAddToHome);
+    }
+
+    function presentAddToHome() {
+		console.log ("presentAddToHome()");
+		$('#bottom-bar #siteappinstaller-install-button').hide();
+        promptEvent.prompt();
+        promptEvent.userChoice.then(choice => {
+			if (choice.outcome === 'accepted') {
+				//console.log('User accepted');
+				if (/android/i.test(navigator.userAgent)) {
+					alert(Ossn.Print('com:webchat:account_settings_section_installed_message'));
+				}
+				Ossn.redirect('');
+			} else {
+				//console.log('User dismissed');
+			}
+		})
+	}
+}
 </script>
