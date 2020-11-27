@@ -19,13 +19,21 @@
 ul.nav.nav-tabs .adminSaveBtn {
 	float:right;
 }
-.tab-content .tab-pane li.homebutton {
+.tab-content .tab-pane ul li.homebutton {
 	text-align:center;
 }
-.tab-content .tab-pane i.homebutton {
+.tab-content .tab-pane ul li i {
 	font-family: FontAwesome;
 	font-style: normal;
 	font-size: 4em;
+}
+.tab-content .tab-pane li.clearfix {
+	display:block;
+	clear:both;
+}
+.tab-content .tab-pane ul li#homeButtonImg img {
+	max-height: 80px;
+	margin: auto;
 }
 
 @media screen and (max-width: 735px) {
@@ -37,6 +45,6 @@ ul.nav.nav-tabs .adminSaveBtn {
   }
 	
   .tab-content .tab-pane ul {
-    padding: 0;
-  	
+    padding: 0; 	
+  }
 }

@@ -7,20 +7,27 @@
  /**
   * Set default values for all variables
   */
-$giphyAPIKey = 'Please obtain an API Key from https://developers.giphy.com';
-$homeChar = 'f015';
-$homeButton = '1';
-$homeURL = '/home';
+$giphyAPIKey 	= 'Please obtain an API Key from https://developers.giphy.com';
+$homeChar 	 	= 'fa-home';
+$homeButton  	= '1';
+$homeURL	 	= '/home';
+$homeButtonStyle  	= '1';
+$homeURLPath    	= 'home';
+$homeImgPath    	= '';
 
 $component = new OssnComponents;
 $settings = $component->getComSettings('webchat');
 if($settings) {
-	$giphyAPIKey = $settings->giphyAPIKey;
-	$giphyAPIKey = $settings->giphyAPIKey;
-	$homeChar    = $settings->homeChar;
-	$homeButton  = $settings->homeButton;
-	$homeURL     = $settings->homeURL;
+	$giphyAPIKey 		= $settings->giphyAPIKey;
+	$giphyAPIKey 		= $settings->giphyAPIKey;
+	$homeChar    		= $settings->homeChar;
+	$homeButton  		= $settings->homeButton;
+	$homeButtonStyle  	= $settings->homeButtonStyle;
+	$homeURL     		= $settings->homeURL;
+	$homeURLPath    	= $settings->homeURLPath;
+	$homeImgPath    	= $settings->homeImgPath;
 }
+
 ?>
 <link rel="stylesheet" href="<?php echo ossn_site_url('components/webchat/plugins/default/css/admin.css');?>" type='text/css'>
 
@@ -29,7 +36,7 @@ if($settings) {
     <li><a data-toggle="tab" href="#menu1"><?php echo ossn_print('com:webchat:admin:giphy');?></a></li>
     <li><a data-toggle="tab" href="#menu2"><?php echo ossn_print('com:webchat:admin:pwa:isolation');?></a></li>
     <li><a data-toggle="tab" href="#menu3"><?php echo ossn_print('com:webchat:admin:pwa');?></a></li>
-	<li class="adminSaveBtn"><input type="submit" value="<?php echo ossn_print('com:webchat:admin:giphy:save');?>" class="btn btn-success"/></li>
+	<li class="adminSaveBtn"><input onclick="updateForm()" type="submit" value="<?php echo ossn_print('com:webchat:admin:giphy:save');?>" class="btn btn-success"/></li>
   </ul>
   <div class="tab-content">
     <div id="home" class="tab-pane fade in active">
@@ -48,26 +55,51 @@ if($settings) {
     <div id="menu2" class="tab-pane fade">
 		<h3><?php echo ossn_print('com:webchat:admin:pwa:isolation');?></h3>
 		<ul class="admin-pwa-isolation">
-		  <li>
+		  <li id="homeButton">
 			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homebutton');?></strong>
 		    <select name="homeButton" value="" class="form-control">
 		      <option value="1" <?php if ($homeButton == "1") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:true');?></option>
-		      <option value="0" <?php if ($homeButton == "0") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:false');?></option>
+		      <option value="0" <?php if ($homeButton == "0") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:false');?></option>			  
 		    </select>
 		  </li>
-
-		  <li>
+		  <li class="clearfix"></li>
+		  
+		  <li id="homeURL">
 			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homeurl');?></strong>
-			<input name="homeURL" type="text" placeholder="f015" value="<?php echo $homeURL;?>" placeholder="<?php echo $homeURL;?>"/>
+		    <select name="homeURL" value="" class="form-control">
+		      <option value="1" <?php if ($homeURL == "1") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:true');?></option>
+		      <option value="0" <?php if ($homeURL == "0") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:false');?></option>			  
+		    </select>
+		  </li>		  
+		  <li id="homeURLPath">
+			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homeurl:path');?></strong>
+			<input name="homeURLPath" class="form-control" type="text" value="<?php echo $homeURLPath;?>" placeholder="<?php echo $homeURLPath;?>"/>
 		  </li>
-		  <li>
+		  <li class="clearfix"></li>		  
+		  <li id="homeButtonStyle">
+			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homebutton:style');?></strong>
+		    <select name="homeButtonStyle" value="" class="form-control">
+		      <option value="0" <?php if ($homeButtonStyle == "0") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:pwa:isolation:homebutton:style:icon');?></option>
+		      <option value="1" <?php if ($homeButtonStyle == "1") echo "selected"; ?>><?php echo ossn_print('com:webchat:admin:pwa:isolation:homebutton:style:image');?></option>
+		    </select>
+		  </li>
+		  <li class="clearfix"></li>		  
+		  <li id="homeChar">
 			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homechar');?></strong>
-			<input name="homeChar" type="text" placeholder="f015" value="<?php echo $homeChar;?>" placeholder="<?php echo $homeChar;?>"/>
+			<input name="homeChar" class="form-control" type="text" value="<?php echo $homeChar;?>" placeholder="<?php echo $homeChar;?>"/>
 		  </li>
-		  <li class="homebutton">
-			<?php echo ("<i class='homebutton'>&#x".$homeChar.";</i>");?>
+		  <li id="homeButtonIcon"class="homebutton">
+			<?php echo ("<i class='fa ".$homeChar."'></i>");?>
 		  </li>
-		</ul>
+		  <li class="clearfix"></li>
+		  <li id="homeImgPath">
+			<strong><?php echo ossn_print('com:webchat:admin:pwa:isolation:homeimg');?></strong>
+			<input name="homeImgPath" class="form-control" type="text" value="<?php echo $homeImgPath;?>" placeholder="<?php echo $homeImgPath;?>"/>
+		  </li>
+		  <li id="homeButtonImg" class="homebutton">
+			<?php echo ("<img src='".$homeImgPath."'/>");?>
+		  </li>		  
+	  </ul>
     </div>
     <div id="menu3" class="tab-pane fade">
 		<h3><?php echo ossn_print('com:webchat:admin:pwa');?></h3>
@@ -131,9 +163,57 @@ if($settings) {
 		</ul>
     </div>
   </div>
+<script>
+$(function() {
+	togglehomeButton();
+});
 
+// Display toggles
+function togglehomeButton() {	
+	if ($('#homeButton select').val()==0) {
+		$('#homeChar').hide();
+		$('#homeButtonIcon').hide();
+		$('#homeButtonImg').hide();
+		$('#homeButtonStyle').hide();
+		$('#homeURL').hide();
+		$('#homeURLPath').hide();
+		$('#homeImgPath').hide();
+	} else {
+		$('#homeButtonStyle').show();
+		$('#homeURL').show();
+		togglehomeButtonStyle();
+		togglehomeURL();
+	}
+}	
+function togglehomeURL() {
+	if ($('#homeURL select').val()==0) {
+		$('#homeURLPath').hide();
+	} else {
+		$('#homeURLPath').show();
+	}
+}
+function togglehomeButtonStyle() {
+	if ($('#homeButtonStyle select').val()==0) {
+		$('#homeChar').show();
+		$('#homeButtonIcon').show();
+		$('#homeImgPath').hide();
+		$('#homeButtonImg').hide();
+	} else {
+		$('#homeChar').hide();
+		$('#homeButtonIcon').hide();
+		$('#homeImgPath').show();		
+		$('#homeButtonImg').show();		
+	}	
+}
 
-
-
-
-<!-- // https://bootsnipp.com/forms for easy form creation // -->
+// Input Click events
+$('#homeURL select').change(function(){
+	togglehomeURL()
+});
+$('#homeButtonStyle select').change(function(){
+	togglehomeButtonStyle()
+});
+$('#homeButton select').change(function(){
+	togglehomeButton();
+});	
+</script>
