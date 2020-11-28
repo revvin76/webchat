@@ -152,8 +152,8 @@ if ((input('action') !== null) && (input('action') == 'messages')) {
 						
 						if ($json['img']) {
 							$returnRecord['json']="true";
-							$returnRecord['giphyOriginal'] = $json[bigImg];
-							$returnRecord['giphyPreview'] = $json[img];
+							$returnRecord['giphyOriginal'] = $json["bigImg"];
+							$returnRecord['giphyPreview'] = $json["img"];
 							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
 								$returnRecord['direction'] = "sent";
 							} else {
@@ -191,8 +191,10 @@ if ((input('action') !== null) && (input('action') == 'recent')) {
 			} else {
 				$withguid = $messageThread->message_to->guid;		
 			}
-			$recentMessages->payload->list[$i]->status = checkStatus($withguid)?checkStatus($withguid):'offline';
-			$recentMessages->payload->list[$i]->elapsed = elapsed_time($messageThread->time);
+			if ($withguid){
+				$recentMessages->payload->list[$i]->status = checkStatus($withguid)?checkStatus($withguid):'offline';
+				$recentMessages->payload->list[$i]->elapsed = elapsed_time($messageThread->time);
+			}
 		}
 	} 
 	echo json_encode($recentMessages);
@@ -268,6 +270,9 @@ function addFriends ($recentMessages) {
 														),
 								"message" => "",
 								"viewed" => "",
+								"time" => "",
+								"status" => "",
+								"payload" => "",
 								"elapsed" => "" );
 			}
 		}
