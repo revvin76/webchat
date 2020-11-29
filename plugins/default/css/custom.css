@@ -1,5 +1,10 @@
 :root {
   --main-bg-color: #435f7a;
+  --main-bg-color-faded: #10171de3;
+  --main-bg-color-faded-light: #10171d33;
+  --main-font-size-normal:0.8em;
+  --main-font-color-placeholder:#32465a;
+  --main-border-radius: 20px;
 }
 
 body {
@@ -12,7 +17,7 @@ body {
   font-family: "proxima-nova", "Source Sans Pro", sans-serif;
   font-size: 1.4em;
   letter-spacing: 0.1px;
-  color: #32465a;
+  color: var(--main-font-color-placeholder);
   text-rendering: optimizeLegibility;
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.004);
   -webkit-font-smoothing: antialiased;
@@ -195,7 +200,135 @@ body {
 	font-size: 0.5em;
 	padding-top: 1em;
 }
+#frame #sidepanel #addChatMenu {
+	display:none;
+	margin: auto;
+	position: absolute;
+	top: 0;
+	left:0;
+	background: var(--main-bg-color-faded);
+	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+	height:100vh;
+	width: 100vw;
+	z-index:1;
+}
+#frame #sidepanel #addChatMenu.show {
+	display:block;
+}
+#frame #sidepanel #addChatMenu .wrap {
+    height: 80vh;
+    width: 90vw;
+    background: var(--main-bg-color);
+    margin: 5vh 5vw 0;
+    border-top-left-radius: var(--main-border-radius);
+    border-top-right-radius: var(--main-border-radius);
+	overflow: hidden;
+}
+#frame #sidepanel #addChatMenu .wrap header {
+    height: 5vh;
+    border-top-right-radius: var(--main-border-radius);
+    border-top-left-radius: var(--main-border-radius);
+    line-height: 5vh;
+	color: #fff;
+}
+#frame #sidepanel #addChatMenu .wrap header i {
+	position: absolute;
+	right: 0;
+	top: 0;
+	padding: 0.3em;
+}
+#frame #sidepanel #addChatMenu .wrap {
+	color: var(--main-bg-color);
+}
+#frame #sidepanel #addChatMenu .wrap .newMembersContainer {
+	background-color: #fff;
+	height: 7%;
+    overflow-x: scroll;		
+}
+#frame #sidepanel #addChatMenu .wrap input#groupName {
+    height: 7%;
+    line-height: 7%;
+    width: 100%;
+    font-family: "proxima-nova", "Source Sans Pro", sans-serif;
+    border: none;
+    font-size: var(--main-font-size-normal);
+    color: var(--main-font-color-placeholder);
+	outline: none;
+	padding-left: 15px;
+}
 
+#frame #sidepanel #addChatMenu .wrap ul.newMembers {
+    width: max-content;
+}
+#frame #sidepanel #addChatMenu .wrap ul.newMembers li.addContact {
+    text-align: center;
+    width: fit-content;
+    border: solid 1px;
+    border-radius: var(--main-border-radius);
+    padding: 3px 30px 3px 9px;
+    position: relative;
+    font-size: 0.7em;
+    float: left;
+    margin-top: 4px;
+    margin-left: 5px;
+}
+#frame #sidepanel #addChatMenu .wrap ul.newMembers li.addContact .imgcontainer {
+	display:none;
+}
+#frame #sidepanel #addChatMenu .wrap ul.newMembers li.addContact .iconcontainer {
+    position: absolute;
+    right: 5px;
+    top: calc(50% - 0.5em);
+}
+#frame #sidepanel #addChatMenu .wrap div.container {
+	overflow-y: scroll;
+    overflow-x: hidden;
+	height: 90%;
+	border-bottom-left-radius: var(--main-border-radius);
+    border-bottom-right-radius: var(--main-border-radius);
+	background-color: #ffffff;
+}
+#frame #sidepanel #addChatMenu .wrap ul.contacts {
+    height: fit-content;
+    display: block;
+    background-color: #fff;
+}
+#frame #sidepanel #addChatMenu .wrap ul.contacts li {
+    display: block;
+    border-style: solid;
+    border: none;
+    border-bottom: solid 1px;
+    height: 50px;
+	border-color: var(--main-bg-color-faded-light);
+}
+#frame #sidepanel #addChatMenu .wrap ul.contacts li div {
+	float:left;
+}
+#frame #sidepanel #addChatMenu .wrap ul.contacts li div img{
+	display:block;
+	width:50px;
+	height:50px;
+}
+#frame #sidepanel #addChatMenu .wrap ul.contacts li div p {
+	display:block;
+	width: calc(100% - 50px);
+	line-height: 50px;
+	padding-left:15px;
+}
+#frame #sidepanel #addChatMenu .wrap ul.contacts li div i.removeMember {
+	display: none;
+}
+#frame #sidepanel #addChatMenu .chatadd-button {
+    height: max-content;
+    border-bottom-right-radius: var(--main-border-radius);
+    border-bottom-left-radius: var(--main-border-radius);
+    line-height: 5vh;
+    color: #fff;
+    background: var(--main-bg-color);
+    width: 90vw;
+    margin: 0 5vw;
+	padding: 0.3em 0;
+}
 #frame #sidepanel #bottom-bar {
   position: absolute;
   width: 100%;
@@ -337,7 +470,7 @@ body {
 #frame .content .contact-profile .media-options #message-menu li {
 	clear:both;
 	text-align: center;
-	font-size: 0.8em;
+	font-size: var--main-font-size-normal;
 	color: #435f7a;
 	padding: 15px 0;
 }
@@ -490,8 +623,8 @@ body {
   font-family: "proxima-nova",  "Source Sans Pro", sans-serif;
   float: left;
   border: none;
-  font-size: 0.8em;
-  color: #32465a;
+  font-size: var--main-font-size-normal;
+  color: var(--main-font-color-placeholder);
   resize: none;
   overflow: auto;
   align-self: self-end;  
@@ -676,8 +809,8 @@ section.message.im {
   z-index: 100;
   top: 40vh;
   padding: 15px;
-  border-radius: 20px;
-  font-size: 0.8em;  
+  border-radius: var(--main-border-radius);
+  font-size: var--main-font-size-normal;  
 }
 
 .cd-popup.show {
