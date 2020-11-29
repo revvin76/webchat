@@ -104,8 +104,58 @@ if ($recentMessages) {
 			<ul>
 			</ul>
 		</div>
+		<div id="addChatMenu">
+			<div class="wrap">
+				<header><?php echo ossn_print('com:webchat:menu:addchat'); ?><i class="fa fa-times" aria-hidden="true"></i></header>
+				<input id="groupName" placeholder="Subject (optional)"/>
+				<div class="newMembersContainer">
+					<ul class="newMembers">
+							<li class="addContact" >
+								<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
+								<div class="namecontainer"><p class="name">Aardvark</p></div>
+								<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
+							</li>
+							<li class="addContact" >
+								<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
+								<div class="namecontainer"><p class="name">Boris</p></div>
+								<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
+							</li>
+							<li class="addContact" >
+								<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
+								<div class="namecontainer"><p class="name">Crabapple</p></div>
+								<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
+							</li>
+					</ul>
+				</div>
+				<div class="container">
+					<ul class="contacts">
+						<li class="addContact" >
+							<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
+							<div class="namecontainer"><p class="name">Deltoid</p></div>
+							<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
+						</li>
+						<li class="addContact" >
+							<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
+							<div class="namecontainer"><p class="name">Efalump</p></div>
+							<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
+						</li>
+						<li class="addContact" >
+							<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
+							<div class="namecontainer"><p class="name">Gertrude</p></div>
+							<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="chatadd-button">
+				<i class="fa fa-arrow-right send" aria-hidden="true"></i>
+			</div>
+		</div>
 		<div id="bottom-bar">
-			<button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:addcontact'); ?></span></button>
+			<button id="addChat">
+				<i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>
+				<span><?php echo ossn_print('com:webchat:menu:addchat'); ?></span>
+			</button>
 			<button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:settings'); ?></span></button>
 		</div>
 	</div>
@@ -811,7 +861,7 @@ $('#main-input').on('input', function () {
  });
 
 // Homescreen installation
-if (/chrome/i.test(navigator.userAgent)) {
+/* if (/chrome/i.test(navigator.userAgent)) {
 	console.log ("Chrome detected. Adding button to menu.");
 	$(".clones .siteappinstaller-install-button").clone(true,true).appendTo($('#bottom-bar'));
 
@@ -848,5 +898,39 @@ if (/chrome/i.test(navigator.userAgent)) {
 			}
 		})
 	}
+} */
+	/* NEW SECTION FOR WebChat Class based functionality  */
+
+/* Page Ready functions */
+$(function() {
+});
+
+$('#addChat').click(function() {
+	$('#addChatMenu').addClass('show');
+});
+$('#addChatMenu .wrap header i').click(function() {
+	$('#addChatMenu').removeClass('show');
+});
+$('#addChatMenu .wrap ul.contacts li').click(function() {
+	if ($(this).parent().attr('class')=='contacts') {
+		$(this).appendTo('#addChatMenu .wrap ul.newMembers');
+	} else {
+		$(this).appendTo('#addChatMenu .wrap ul.contacts');
+		sortUL('#addChatMenu .wrap ul.contacts');
+	}
+});
+$('#addChatMenu .wrap ul.newMembers li').click(function() {
+	if ($(this).parent().attr('class')=='contacts') {
+		$(this).appendTo('#addChatMenu .wrap ul.newMembers');
+	} else {
+		$(this).appendTo('#addChatMenu .wrap ul.contacts');
+		sortUL('#addChatMenu .wrap ul.contacts');
+	}
+});
+
+function sortUL(selector) {
+	$(selector).each(function(){
+		$(this).children('li').sort((a,b)=>a.innerText.localeCompare(b.innerText)).appendTo(this);
+	});
 }
 </script>
