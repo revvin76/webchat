@@ -15,7 +15,7 @@ $en = array(
     'com:webchat:homebutton' => 'Home',
     'com:webchat:input:placeholder' => 'Type a message',
     'com:webchat:menu:settings' => 'Settings',
-    'com:webchat:menu:addcontact' => 'Add contact',
+    'com:webchat:menu:addchat' => 'New chat',
 	
 	'com:webchat:admin:title' => 'General',
 	'com:webchat:admin:subtitle' => 'Use these screens to customise your WebChat experience.',
