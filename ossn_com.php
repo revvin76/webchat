@@ -1,16 +1,8 @@
 <?php
-/**
- * Open Source Social Network
- *
- * @package   Open Source Social Network
- * @author    Open Social Website Core Team <info@informatikon.com>
- * @copyright 2014 iNFORMATIKON TECHNOLOGIES
- * @license   General Public Licence http://www.opensource-socialnetwork.org/licence
- * @link      http://www.opensource-socialnetwork.org/licence
- */
-//setting up path so we can use it in entire file 
-//if your component folder have upper and lower case characters please use same here.
+
 define('__WEB_CHAT__', ossn_route()->com . 'webchat/');
+require_once(__WEB_CHAT__ . 'classes/WebChat.php');
+
 //this section initialises the API extensions
 function unread_mesages_count_api_custom($hook, $type, $methods, $params) {
 		$methods['v1.0'][] = 'unread_mesages_count_custom';
