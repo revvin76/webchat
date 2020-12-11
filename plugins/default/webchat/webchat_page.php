@@ -1,5 +1,7 @@
 <?php
-$chatUser = ossn_loggedin_user();
+$chatUser = ossn_loggedin_user()->guid;
+$path_img = ossn_site_url('components/webchat/plugins/default/img');
+$path_wcroot = ossn_site_url('webchat');
 //******************* This section contains static variables *******************//
 $apiKey = ossn_services_apikey();
 $siteURL = ossn_site_url('api/v1.0/');
@@ -10,20 +12,6 @@ $notifsURL = $siteURL."notifications_count?";
 $notifcountURL = $siteURL."unread_mesages_count_custom?";
 $recentURL = $siteURL."message_recent?";
 //******************************************************************************//
-function elapsed_time($timestamp, $precision = 1) {
-  $time = time() - $timestamp;
-  $a = array('decade' => 315576000, 'year' => 31557600, 'month' => 2629800, 'week' => 604800, 'day' => 86400, 'hour' => 3600, 'min' => 60, 'sec' => 1);
-  $i = 0;
-  foreach($a as $k => $v) {
-    $$k = floor($time/$v);
-    if ($$k) $i++;
-    $time = $i >= $precision ? 0 : $time - $$k * $v;
-    $s = $$k > 1 ? 's' : '';
-    $$k = $$k ? $$k.' '.$k.$s.' ' : '';
-    @$result .= $$k;
-  }
-  return $result ? $result.'ago' : '1 sec to go';
-}
 function CallAPI ($url,$post) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
@@ -48,36 +36,29 @@ function checkStatus($guidToCheck) {
 }	
 
 /* Get the list of message threads */
-$recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
-$recentMessages = CallAPI ($recentURL , $recentPARAM);
+// $recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
+// $recentMessages = CallAPI ($recentURL , $recentPARAM);
 
 /* Capture the friends list */
 $friends = ossn_loggedin_user()->getFriends();
 
-	
-if ($recentMessages) {
-	if ( $recentMessages->payload->list[0]->message_to->guid == ossn_loggedin_user()->guid ) {
-		$with = $recentMessages->payload->list[0]->message_from->guid;
-	} else {
-		$with = $recentMessages->payload->list[0]->message_to->guid;
-	}
-	
-	/* Capture the user we are talking to in the first thread */
-	$userPARAM = array( 'api_key_token' => $apiKey , 'guid' =>  $with);
-	$user2 = CallAPI ($userURL , $userPARAM);
-	
-	/* Get the first message thread */
-	// $listPARAM = array( 'api_key_token' => $apiKey , 'guid' => $chatUser->guid , 'to' => $user2->payload->guid);
-	// $listMessages = CallAPI ($listURL , $listPARAM);
-	
-	/* Store the current notification counts */
-	$notifcountPARAM = array( 'api_key_token' => $apiKey , 'guid' => $chatUser->guid);
-	$notifcount = CallAPI ($notifcountURL , $notifcountPARAM);
-	
-	$component = new OssnComponents;
-	$WebChat  = $component->getSettings("webchat");
-}
+$component = new OssnComponents;
+$WebChatSettings  = $component->getSettings("webchat");
 
+$timestamp = time();
+$token     = ossn_generate_action_token($timestamp);
+$token   = array(
+		'ossn_ts' => $timestamp,
+		'ossn_token' => $token
+);
+$configs = array(
+		'token' => $token,
+		'cache' => array(
+				'last_cache' => hash('crc32b', ossn_site_settings('last_cache')),
+				'ossn_cache' => ossn_site_settings('cache')
+		)
+);
+echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&ossn_token=".$token['ossn_token']."');</script>");
 ?>
 <script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
 
@@ -87,16 +68,16 @@ if ($recentMessages) {
 		<div id="profile">
 			<!--<div class="wrap">-->
 			<?php 
-			  if ($WebChat->homeButton==1) {
-				  if ($WebChat->homeURL==1) echo '<a href="' . ossn_site_url($WebChat->homeURLPath) . '" class="button">';
+			  if ($WebChatSettings->homeButton==1) {
+				  if ($WebChatSettings->homeURL==1) echo '<a href="' . ossn_site_url($WebChatSettings->homeURLPath) . '" class="button">';
 				  
-				  if ($WebChat->homeButtonStyle==0)echo '<i class="fa ' . $WebChat->homeChar . '"></i>';
+				  if ($WebChatSettings->homeButtonStyle==0)echo '<i class="fa ' . $WebChatSettings->homeChar . '"></i>';
 				  
-				  if ($WebChat->homeButtonStyle==1)echo '<img src="' . $WebChat->homeImgPath . '" alt=""/>';
+				  if ($WebChatSettings->homeButtonStyle==1)echo '<img src="' . $WebChatSettings->homeImgPath . '" alt=""/>';
 				  
 				  echo '<span>' . ossn_print('com:webchat:homebutton') . '</span>';
 				  
-				  if ($WebChat->homeURL==1) echo '</a>';
+				  if ($WebChatSettings->homeURL==1) echo '</a>';
 				  
 			  }?>
 		</div>
@@ -104,61 +85,37 @@ if ($recentMessages) {
 			<ul>
 			</ul>
 		</div>
-		<div id="addChatMenu">
-			<div class="wrap">
-				<header><?php echo ossn_print('com:webchat:menu:addchat'); ?><i class="fa fa-times" aria-hidden="true"></i></header>
-				<input id="groupName" placeholder="Subject (optional)"/>
-				<div class="newMembersContainer">
-					<ul class="newMembers">
-							<li class="addContact" >
-								<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
-								<div class="namecontainer"><p class="name">Aardvark</p></div>
-								<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
-							</li>
-							<li class="addContact" >
-								<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
-								<div class="namecontainer"><p class="name">Boris</p></div>
-								<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
-							</li>
-							<li class="addContact" >
-								<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
-								<div class="namecontainer"><p class="name">Crabapple</p></div>
-								<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
-							</li>
-					</ul>
-				</div>
-				<div class="container">
-					<ul class="contacts">
-						<li class="addContact" >
-							<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
-							<div class="namecontainer"><p class="name">Deltoid</p></div>
-							<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
-						</li>
-						<li class="addContact" >
-							<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
-							<div class="namecontainer"><p class="name">Efalump</p></div>
-							<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
-						</li>
-						<li class="addContact" >
-							<div class="imgcontainer"><img src="https://kjbtech.co.uk/ossn/avatar/Kevinb/small/f951bd096c1f5c835e37bddc29ae0044.jpeg" alt=""></div>
-							<div class="namecontainer"><p class="name">Gertrude</p></div>
-							<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div class="chatadd-button">
-				<i class="fa fa-arrow-right send" aria-hidden="true"></i>
-			</div>
-		</div>
 		<div id="bottom-bar">
 			<button id="addChat">
 				<i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>
 				<span><?php echo ossn_print('com:webchat:menu:addchat'); ?></span>
 			</button>
-			<button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:settings'); ?></span></button>
+			<button id="fullscreen"><i class="fa fa-arrows-alt fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:fullscreen'); ?></span></button>			
+			<?php if(ossn_isAdminLoggedin()) {
+					echo '<button onclick="location.href = \'' . ossn_site_url("administrator") . '\';" id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>' . ossn_print('com:webchat:menu:settings') . '</span></button>';
+				}; ?>
+			<button onclick="location.href='<?php echo ossn_site_url("action/user/logout?ossn_ts=") . $token['ossn_ts'] . "&ossn_token=" . $token['ossn_token']; ?>'" id="logout"><i class="fa fa-sign-out fa-fw" aria-hidden="true"></i> <span><?php echo ossn_print('com:webchat:menu:logout'); ?></span></button>
 		</div>
 	</div>
+	<div id="addChatMenu">
+		<div class="wrap">
+			<header><p></p><i class="fa fa-times" aria-hidden="true"></i></header>
+			<input id="groupName" placeholder="Subject (optional)"/>
+			<div class="newMembersContainer">
+				<ul class="newMembers">
+				</ul>
+			</div>
+			<div class="container">
+				<ul class="contacts">
+
+				</ul>
+			</div>
+			<div class="chatadd-button new">
+				<i class="fa fa-arrow-right send" aria-hidden="true"></i>
+			</div>				
+		</div>
+	</div>
+
 	<div id="content" class="content">
 		<div class="contact-profile">
 			<div class="back-arrow">
@@ -166,33 +123,41 @@ if ($recentMessages) {
 			</div>
 			<script>
 			$(".back-arrow").click(function() {
-				updateActive(-1);
-				recentMessages();
+				wcGetFriends(1);
 				$("#sidepanel").removeClass("outLeft");
 				$("#sidepanel").addClass("onFromLeft");
 				$("#frame .content").removeClass("onFromRight");
 				$("#frame .content").addClass("outRight");
-
+				$('#message-menu').removeClass('show');
 			});</script>			
-			<img src="<?php echo $user2->payload->icon->small;?>" alt="<?php echo $user2->payload->fullname;?>" />
-			<p><?php echo $user2->payload->first_name;?></p>
-			<div class="media-options">
-				<i class="fa fa-video-camera" aria-hidden="true"></i>
-				<i class="fa fa-phone" aria-hidden="true"></i>
+			<img src="" alt="" />
+			<div class="groupinfo">
+				<p class="groupname"></p>
+				<p class="groupmembers"></p>
+			</div>
+			<div id="media-options" class="media-options">
+				<!-- <i class="fa fa-video-camera" aria-hidden="true"></i> -->
+				<!-- <i class="fa fa-phone" aria-hidden="true"></i> -->
 				<i class="fa fa-ellipsis-v message-menu" aria-hidden="true"></i>
 				<div id="message-menu" class="dropdown-content">
 					<ul>
-					<li id="view-user-btn">View User Details</li>
-					<li id="report-user-btn">Report User</li>
-					<li id="block-user-btn">Block User</li>
-					<li id="clear-chat-btn">Clear Chat</li>
+						<!-- <li id="view-user-btn"><span>View User Details</span></li> -->
+						<!-- <li id="report-user-btn"><span>Report User</span></li> -->
+					 	<!-- <li id="block-user-btn"><span>Block User</span></li> -->
+						<!-- <li id="clear-chat-btn"><span>Clear Chat</span></li> -->
+
+						<li class="media-group-btn"><i class="fa fa-picture-o" aria-hidden="true"></i><span>View Group Images</span></li>
+						<li class="mute-group-btn"><i class="fa fa-bell-slash-o" aria-hidden="true"></i><span>Mute Notifications</span></li>
+						
 					</ul>
 				</div>
 			</div>
 		</div>
 		<div id="messages" class="messages">
-			<ul id="messageList">
-			</ul>
+			<span class="messages">
+				<ul id="messageList">
+				</ul>
+			</span>
 		</div>
 		<div id="message-input" class="message-input">
 			<div class="wrap">
@@ -227,44 +192,114 @@ if ($recentMessages) {
 </div>
 <audio id="newmessage" src="<?php echo ossn_site_url("components/OssnSounds/audios/pling.mp3"); ?>" type="audio/mp3"></audio>
 <div class="clones" hidden>
-			<li class="sent giphy" data-id=""></li>
-			<li class="replies giphy" data-id=""></li>
+			<div class="group-photos-container"><ul></ul></div>
 			<li class="sent std" data-id=""></li>
 			<li class="replies std" data-id=""></li>
-			<li class="contact"></li>
-			<div class="giphy-img"></div>
-			<span id="loadMore" data-page="0">more</span>
-			<div class="media-options">
-				<i class="fa fa-video-camera" aria-hidden="true"></i>
-				<i class="fa fa-phone" aria-hidden="true"></i>
-				<i class="fa fa-ellipsis-v message-menu" aria-hidden="true"></i>
-				<div id="message-menu" class="dropdown-content">
-					<ul>
-					<li id="view-user-btn">View User Details</li>
-					<li id="report-user-btn">Report User</li>
-					<li id="block-user-btn">Block User</li>
-					<li id="clear-chat-btn">Clear Chat</li>
-					</ul>
+			<li class="message" data-id="#">
+				<img class="profile" src="#" alt="">
+				<article>
+					<img class="giphy" src="#" alt="">
+					<section class="name"><span class="section_name_span"></span></section>
+					<section class="message"></section>
+					<section class="message_time"></section>
+				</article>
+			</li>
+			<li class="contact" id="#">
+				<div class="wrap">
+					<span class="contact-status"></span>
+					<img src="" alt="">
+					<div class="meta">
+						<p class="name"></p>
+						<p class="preview"></p>
+					</div>
+					<section class="message_time"></section>
 				</div>
+			</li>
+			<div class="giphy-img"></div>
+			<i class="fa fa-times delphoto"></i>
+			<li class="group-photo"></li>
+			<img class="giphy"></img>
+			<span id="loadMore" data-page="0">more</span>
+			<div class="url_preview">
+				<img class="url_image"></img>
+				<span class="previewholder">
+					<p class="title"></p>
+					<span class="descriptionholder">
+						<span class="textholder"><p class="description"></p></span>
+						<div class="fadeout"></div>
+					</span>
+					<p class="sitename"></p>
+				</span>
 			</div>
+			<!-- <div class="media-options"> -->
+				<!-- <i class="fa fa-video-camera" aria-hidden="true"></i> -->
+				<!-- <i class="fa fa-phone" aria-hidden="true"></i> -->
+				<!-- <i class="fa fa-ellipsis-v message-menu" aria-hidden="true"></i> -->
+				<!-- <div id="message-menu" class="dropdown-content"> -->
+					<!-- <ul> -->
+					<!-- <li id="view-user-btn">View User Details</li> -->
+					<!-- <li id="report-user-btn">Report User</li> -->
+					<!-- <li id="block-user-btn">Block User</li> -->
+					<!-- <li id="clear-chat-btn">Clear Chat</li> -->
+					<!-- </ul> -->
+				<!-- </div> -->
+			<!-- </div> -->
 			<button class="siteappinstaller-install-button" >
 				<i class="fa fa-download fa-fw\" aria-hidden="true"></i>
 				<span><?php echo ossn_print('com:webchat:account_settings_section_button'); ?></span>
-			</button>			
+			</button>		
+			<li class="addContact" data-guid="#">
+				<div class="imgcontainer"><img src="#" alt=""></div>
+				<div class="namecontainer"><p class="name"></p></div>
+				<div class="iconcontainer"><i class="fa fa-times removeMember" aria-hidden="true"></i></div>
+			</li>	
+			<div id="message-menu">
+				<ul>
+					<span class="group-owner-buttons">
+						<li class="rename-group-btn"><i class="fa fa-pencil" aria-hidden="true"></i><span>Rename Group</span></li>
+						<li class="manage-group-btn"><i class="fa fa-wrench" aria-hidden="true"></i><span>Manage Members</span></li>
+						<li class="delete-group-btn"><i class="fa fa-ban" aria-hidden="true"></i><span>Delete Group</span></li>					
+						<li class="delegate-group-btn"><i class="fa fa-ban" aria-hidden="true"></i><span>Delegate Admin</span></li>	
+					</span>
+					<span class="group-viewer-buttons">
+						<li class="view-group-btn"><i class="fa fa-users" aria-hidden="true"></i><span>View Members</span></li>	
+						<li class="leave-group-btn"><i class="fa fa-group"></i><span>Leave Group</span></li>
+					</span>
+				</ul>
+			</div>
 </div>
 <div class="cd-popup" role="alert">
    <div class="cd-popup-container">
-      <p>Are you sure you want to delete this element?</p>
-      <ul class="cd-buttons">
-         <li class="dialog-yes">Yes</li>
-         <li class="dialog-no">Cancel</li>
-      </ul>
+	  <span class="cd-header">
+		<legend>legend</legend>
+	  </span>
+	  <span class="cd-content">
+        <p>Are you sure you want to delete this element?</p>
+		<input id="cd-popup-input" placeholder="placeholder"/>
+	  </span>
+	  <span class="cd-footer">
+        <ul class="cd-buttons">
+           <li class="dialog-yes">Yes</li>
+           <li class="dialog-no"><?php echo ossn_print('com:webchat:generic:dismiss'); ?></li>
+        </ul>
+	  </span>
    </div> <!-- cd-popup-container -->
 </div> <!-- cd-popup -->
 <div class="cd-popup-fade"></div>
 <div class="giphy-fs-container">
-  <div class="giphy-fs-dismiss"><i class="fa fa-times" aria-hidden="true"></i></div>
-  <div class="giphy-fs-image"></div>
+    <div class="giphy-fs-dismiss"><i class="fa fa-times" aria-hidden="true"></i></div>
+    <div class="giphy-fs-image"><img src="#" alt=""></img></div>
+    <div id="bottom-bar-photo">
+		<button id="group_image_button">
+			<i class="fa fa-upload fa-fw" aria-hidden="true"></i>
+			<?php echo ossn_print('com:webchat:group:changephoto:choose'); ?>
+		</button>
+		<button id="group_image_select">
+			<i class="fa fa-picture-o fa-fw" aria-hidden="true"></i>
+			<?php echo ossn_print('com:webchat:group:changephoto:select'); ?>
+		</button>
+		<input id="group_image" class="file-input" type="file" accept="image/*" />
+    </div>	
 </div>
 <div id="loader"></div>
 
@@ -272,14 +307,26 @@ if ($recentMessages) {
 var notifs_running = false;
 var notifcount = '<?php echo (print_r(json_encode($notifcount),true)); ?>';
 
+const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+function amIMobile() {
+ return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+};
 
 $(function() {
 	if (window.matchMedia('(display-mode: standalone)').matches) {
 		$('.siteappinstaller-install-button').hide();
 	}	
-	if ((window.matchMedia('(display-mode: browser)').matches) && (window.matchMedia('(max-width: 768px)').matches)) {
-		$("#frame #sidepanel #bottom-bar").css("bottom","55px");
-	}	
+
+	<!-- console.log (amIMobile(),amIFullscreen()); -->
+	<!-- if(!amIMobile()) { -->
+	 <!-- $("#frame #sidepanel #bottom-bar").css("bottom","0vh"); -->
+	 <!-- $("#frame #bottom-bar-photo").css("bottom","0vh"); -->
+	<!-- } -->
+	<!-- if ((window.matchMedia('(display-mode: browser)').matches) && (window.matchMedia('(max-width: 768px)').matches)) { -->
+		<!-- $("#frame #sidepanel #bottom-bar").css("bottom","55px"); -->
+	<!-- }	 -->
 
     $.ajax({
 	   type: 'GET',
@@ -298,11 +345,7 @@ $(function() {
 	  $('#giphycat' + $(this).data('filter') + ' div').addClass("visibleChar").removeClass("hiddenChar");
 	});
 
-	recentMessages();
-	// compareArrays();
 });
-
-$(".messages").animate({ scrollTop: $(document).height() }, "fast");
 
 var scrollPos = 0;
 $(".messages").on("scroll", function() {
@@ -317,69 +360,31 @@ $("#profile-img").click(function() {
 	$("#status-options").toggleClass("active");
 });
 
-$(".expand-button").click(function() {
-  $("#profile").toggleClass("expanded");
-	$("#contacts").toggleClass("expanded");
-});
-
-// Message Menu Buttons ///////////////////////////////////////////////////////////////////////////
-// View user
-$("#view-user-btn").click(function() {
-   $("#message-menu").removeClass("show");
-   $(".cd-popup p").html("Do you want to leave Web Chat to visit the users profile?");
-   $(".cd-popup").addClass("show");
-   $(".cd-popup-fade").addClass("show");
-});
-// Report user
-$("#report-user-btn").click(function() {
-   $("#message-menu").removeClass("show");
-   $(".cd-popup p").html("Do you really want to report this user?");
-   $(".cd-popup").addClass("show");
-   $(".cd-popup-fade").addClass("show");
-});
-// Block user
-$("#block-user-btn").click(function() {
-   // $block = ossn_site_url("action/block/user?user={$user->guid}", true);
-   $("#message-menu").removeClass("show");
-   $(".cd-popup p").html("Do you really want to block this user?");
-   var dataurl = "<?php echo ossn_site_url() . 'action/block/user?user=';?>" + $("#activeContact").val().toString();
-   $(".cd-popup ul li.dialog-yes").attr("data-url", dataurl );
-   $(".cd-popup").addClass("show");
-   $(".cd-popup-fade").addClass("show");   
-});
-// Clear chat
-$("#clear-chat-btn").click(function() {
-   $("#message-menu").removeClass("show");
-   $(".cd-popup p").html("Clear all messages?");
-   $(".cd-popup").addClass("show");
-   $(".cd-popup-fade").addClass("show");   
-});
-// Dismiss dialog
-$(".dialog-no").click(function() {
+<!-- $(".expand-button").click(function() { -->
+  <!-- $("#profile").toggleClass("expanded"); -->
+	<!-- $("#contacts").toggleClass("expanded"); -->
+<!-- }); -->
+$(".dialog-no").click(function() {  																	// Dismiss dialog
    $(".cd-popup").removeClass("show");
    $(".cd-popup-fade").removeClass("show");
    $(".cd-popup ul li.dialog-yes").attr("href", "#");
 });
-
-// Clicking an emoji
-$('.emojiPanel').on('click', '#emojiSelector .visibleChar input', function () {
+$('.emojiPanel').on('click', '#emojiSelector .visibleChar input', function () {							// Clicking an emoji
     $(".message-input .wrap > textarea").val($(".message-input .wrap > textarea").val() + $(this).attr('value'));
 });
-
-// Clicking message menu
-$('.media-options .message-menu').on('click', function () {
+$('.media-options .message-menu').on('click', function () {												// Clicking message menu
 	$('#message-menu').toggleClass('show');
 });
-
-// Click a contact to open the messages
-$('li.contact').click(function() {
+$('li.contact').click(function() {																		// Click a contact to open the messages
   $('li.contact').removeClass("active");
   $(this).find(".contact-new").remove();
   $(this).addClass("active");
   withguid = $(this).attr('id');
-  updateActive(withguid);
+  owner = $(this).attr('data-owner');
+  // updateActive(withguid);
   $("#messages ul").empty();
-  listMessages(withguid);
+  // listMessages(withguid);
+  wcGetGroupMessages(withguid);
   setTimeout(function(){
 	  $("#sidepanel").removeClass("onFromLeft");
 	  $("#sidepanel").addClass("outLeft");
@@ -387,436 +392,11 @@ $('li.contact').click(function() {
 	  $("#frame .content").addClass("onFromRight");
   });
 });
-	
-///////////////////////////////GIPHY//////////////////////////
-// Clicking GIPHY button
-$("#giphyPanel").click(function(e) {
-	$(".giphyPanel").addClass("onFromBottomGiphy").focus();
-	$(".giphyPanel").removeClass("outBottomGiphy");
-	$(".emojiPanel").addClass("outBottom");
-	$(".emojiPanel").removeClass("onFromBottom");	
-	
-	var xhr = $.get('<?php echo ( ossn_site_url("giphy"));?>?action=trending');
-	xhr.done(function(data) {
-		$('#giphySelector .results').html("");
-		var json_response = JSON.parse(decodeURIComponent(data));
-		var i;
-		for (i = 0; i < 25; i++) {
-		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.left'));
-		}
-		for (i = 25; i < 50; i++) {
-		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.right'));
-		}
-	});
-});
-// Clicking GIPHY image from results
-$('div.giphy-img').on('click', function () {
-		if ($(".giphyPanel").hasClass("onFromBottomGiphy")) {
-			$(".giphyPanel").addClass("outBottomGiphy");
-			$(".giphyPanel").removeClass("onFromBottomGiphy");
-		}
-		var giphyImg = $(this).find("img").attr("src");
-		var giphyBig = $(this).find("img").attr("data-og");
 
-		$( ".clones .sent.giphy" ).clone(true,true).html('<img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article class="giphy"><section class="message im"><img class="giphy" og="' + giphyBig + '" src="' + giphyImg + '"/></section><section class="message_time">Just now</section><i class="fa fa-circle sent-unread" aria-hidden="true"></i></article>').attr("og",giphyBig).appendTo( $('.messages ul') );
-		// Scroll to show the new message
-		var d = $("div.messages");		
-		$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
-
-		// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
-		$('#main-input').val(null).blur();
-		$('#main-input').css("height","15px");
-		$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
-		$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
-		
-		// Send the message to OSSN
-		message = '{"img": "' + giphyImg + '", "bigImg": "' + giphyBig + '"}'
-
-		recentMessages();
-		activeContact = document.getElementById('activeContact').value;
-		
-		$.post("<?php echo ossn_site_url('chat_api'); ?>",
-		{
-		  action: 'send',  
-		  from: <?php echo ossn_loggedin_user()->guid; ?>,
-		  to: activeContact,
-		  message: message,
-		  giphy: true,
-		});
-	
-});
-// Click GIPHY image in thread
-$("li.sent.giphy").click(function() {
-	var giphyFull = $(this).find("img.giphy").attr("og");
-   $(".giphy-fs-container .giphy-fs-image").html("<img src='" + giphyFull + "'>");
-   $(".giphy-fs-container").addClass("show");
-});
-// Click GIPHY dismiss
-$(".giphy-fs-container .giphy-fs-dismiss i").click(function() {
-   $(".giphy-fs-container .giphy-fs-image").html('');
-   $(".giphy-fs-container").removeClass("show");
-});
-// Typing in GIPHY
-function delay(callback, ms) {
-  var timer = 0;
-  return function() {
-    var context = this, args = arguments;
-    clearTimeout(timer);
-    timer = setTimeout(function () {
-      callback.apply(context, args);
-    }, ms || 0);
-  };
-}
-$('.giphyPanel .giphy-input').keyup( delay ( function(){
-   	var xhr = $.get('<?php echo ( ossn_site_url("giphy"));?>?action=search&query=' + $(this).val());
-	xhr.done(function(data) {
-		$('#giphySelector .results').html("");
-		var json_response = JSON.parse(decodeURIComponent(data));
-		var i;
-		for (i = 0; i < 25; i++) {
-		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.left'));
-		}
-		for (i = 25; i < 50; i++) {
-		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.right'));
-		}
-	});
-}, 500));
-
-// Clicking outside of the emoji selection panel makes it disappear			
-$( "body" ).click(function( event ) {
-	var target = $(event.target);    
-    if ((target.parents('div.messages, div.contact-info').length) || (event.target.id == 'main-input'))  {
-		if ($(".emojiPanel").hasClass("onFromBottom")) {
-			$(".emojiPanel").addClass("outBottom");
-			$(".emojiPanel").removeClass("onFromBottom");
-		}
-		if ($(".giphyPanel").hasClass("onFromBottomGiphy")) {
-			$(".giphyPanel").addClass("outBottomGiphy");
-			$(".giphyPanel").removeClass("onFromBottomGiphy");
-		}
-    }
-});
-
-// Click the emoji icon for the emoji selector panel to appear
-$("#emojiPanel").click(function(e) {
-	$(".emojiPanel").addClass("onFromBottom").focus();
-	$(".emojiPanel").removeClass("outBottom");
-	$(".giphyPanel").addClass("outBottomGiphy");
-	$(".giphyPanel").removeClass("onFromBottomGiphy").focus();
-});
-			
-function newMessage() {
-	$(".emojiPanel").addClass("outBottom");
-	$(".emojiPanel").removeClass("onFromBottom");
-	message = $("#main-input").val();
-	if($.trim(message) == '') {
-		return false;
-	}
-	
-	// Lets check if its a single emoji, and if so make it bigger
-	var lgemoji = null;
-	if (message.length==2 & message.codePointAt(0) > 1000 ) { lgemoji = "lg-emoji"}
-	
-	$('<li class="sent ' + lgemoji + '"><img src="<?php echo ossn_loggedin_user()->iconURL()->small; ?>" alt="" /><article><section class="message im">' + message + '</section><section class="message_time">Just now</section><i class="fa fa-circle sent-unread" aria-hidden="true"></i></article></li>').appendTo($('.messages ul'));
-
-
-	// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
-	$('#main-input').val(null).blur();
-	$('#main-input').css("height","15px");
-	$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
-	$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
-	
-	//$('.contact.active .preview').html('<i class="fa fa-circle sent-unread" aria-hidden="true"></i>' + message);
-	recentMessages();
-	
-	activeContact = document.getElementById('activeContact').value;
-	
-	$.post("<?php echo ossn_site_url('chat_api'); ?>",
-	{
-	  action: 'send',  
-	  from: <?php echo ossn_loggedin_user()->guid; ?>,
-	  to: activeContact,
-	  message: message
-	});
-	// Scroll to show the new message
-	var d = $("div.messages");		
-	$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
-};
-
-function listMessages(withguid, offset = 1){
-	$("#loader").addClass("show");
-	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "messages", from: <?php echo ossn_loggedin_user()->guid; ?>, to: withguid, offset: offset })
-     .done(function( data ) {
-		// $("div.contact-profile").remove();
-		// $("div.messages").remove();
-		// $("div.content").prepend(data);
-		// var d = $("div.messages");
-		// d.scrollTop(d.prop("scrollHeight"));
-		//$( ".clones .media-options" ).clone(true,true).appendTo( ".contact-profile" );
-		if (data != 'null') {
-		  updateMessages(data, offset);
-		} else {
-			$("div.messages ul").empty();
-		}
-     });
-	 notifs_running = false;
-	 $("#loader").removeClass("show");
-};
-
-function updateMessages (data, offset) {
-	// Must receive a json payload containing all the messages. Will update the message thread, and contact name/picture
-	var obj = jQuery.parseJSON( data );
-	
-	var d = $(".messages");
-	// Capture the current scroll position
-	var old_height = d.prop("scrollHeight");;  //store document height before modifications
-
-	// If this is the first page of messages, reset the thread
-	if (offset == 0) {
-		$("div.messages ul").empty();
-	}
-
-	// Find the most recent message, and delete any you've posted since
-	// var mostRecentID = 0;
-	// $('.messages ul li').each(function() {
-		// mostRecentID = Math.max(this.id, mostRecentID);
-	// });
-	// $('#' + mostRecentID).nextAll('li').remove();
-
-	// Find the first message index that we need to start adding to the screen
-	// var closest = null;
-	// console.log (obj[0]);
-	// $.each(obj, function(index,message){
-	  // if (closest == null || Math.abs(message.id - mostRecentID) < Math.abs(closest - mostRecentID)) {
-		// closest = message.id;
-		// firstMessage = index;
-	  // }
-	// });
-
-	// Reverse the message order if neccessary
-	if (obj.maxpages > 1 ) {
-		if (obj.page) {
-			if (obj.page >= 1) {
-				obj.messages = obj.messages.reverse();
-			}
-		}
-	}
-		
-	//Now start adding the messages to the screen
-	$.each(obj.messages, function(index, message) {
-		// if (index >= firstMessage) {
-			
-			var litype = 'std';
-			var messagehtml = '<img src="';
-			if (message.direction == 'sent') {
-				messagehtml += obj.user1icon;
-			} else {
-				messagehtml += obj.user2icon;
-			};
-			messagehtml += '" alt="" /><article';
-			if (message.json == 'true') { 
-				litype = 'giphy';
-				messagehtml += ' class="giphy"';
-				messagehtml += '><section class="message"><img class="giphy" og="' + message.giphyOriginal + '" src=\"' + message.giphyPreview + '"/>';
-			} else {
-				messagehtml += '><section class="message">' + message.message;
-			}
-			messagehtml += '</section><section class="message_time">' + message.elapsed + '</section>';
-			if (message.direction == 'sent') {
-				if (message.viewed == 0) {
-					messagehtml += '<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
-				} else {
-					messagehtml += '<i class="fa fa-circle sent-read" aria-hidden="true"></i>';	
-				}
-			}
-			messagehtml += '</article>';
-			
-			if (parseInt(obj.page,10) == 1) {
-				$( ".clones ." + message.direction + "." + litype).clone(true,true).html(messagehtml).attr("data-id",message.id).prependTo($(".messages ul"));
-			} else {
-				$( ".clones ." + message.direction + "." + litype).clone(true,true).html(messagehtml).attr("data-id",message.id).prependTo($(".messages ul"));				
-			}
-		// }
-	});
-
-	// Check whether to display a "load more" prompt
-	if (obj.maxpages > 1 ) {
-		if (obj.page) {
-			if (obj.page > 0) reversed = obj.messages.reverse();
-			if (parseInt(obj.page,10) < obj.maxpages) 
-				$(".clones #loadMore").clone(true,true).attr("data-page",parseInt(obj.page,10) + 1).html("more").prependTo($(".messages ul"));
-		} else {
-			$(".clones #loadMore").clone(true,true).attr("data-page","1").html("more").prependTo($(".messages ul"));
-		}
-	}	
-	
-	// Scroll to show the new message
-	if (offset == 0) {
-		$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
-	} else {
-		$(".messages").animate({ scrollTop: d.prop("scrollHeight") - old_height }, "fast");
-	}
-}
-function updateActive(newContact) {
-	// Update the contact details at the top of the screen
-	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "getuser", guid: newContact })
-	 .done(function( data ) {
-		try {
-		  var obj = $.parseJSON( data );
-		  $("div.contact-profile img").attr("src",obj.payload.icon.small);
-		  $("div.contact-profile p").html(obj.payload.fullname);
-		}
-		catch (err) {
-		  // Will be undefined on returning to contacts. Wont need to do anything
-		}
-	 });
-	$("#activeContact").val(newContact);
-}
-
-function compareArrays(){	
-	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "compare" })
-.done(function( data ) {
-	console.log (data);
-})};
-
-function recentMessages(){	
-	$.post( "<?php echo ossn_site_url('chat_api'); ?>", { action: "recent", to: <?php echo ossn_loggedin_user()->guid; ?> , active: document.getElementById('activeContact').value })
-	 .done(function( data ) {
-		$("div#contacts ul").empty();
-		
-		obj = JSON.parse(data);
-		$.each(obj.payload.list, function(i,message) {
-			/*var newHTML = '<li class="contact';*/
-			if ( message.message_to.guid == <?php echo ossn_loggedin_user()->guid; ?>) {
-				var current_message = message.message_from;
-				var withguid = message.message_from.guid;
-				var sent=false;
-			} else {
-				var current_message = message.message_to;
-				var withguid = message.message_to.guid;		
-				var sent=true;	
-			}			
-			
-			if (withguid == $("#activeContact").val()) {
-				// newHTML += " active";
-			}
-			
-			// newHTML += '" id="' + withguid + '">
-			
-			newHTML = '<div class="wrap"><span class="contact-status ' + message.status + '"></span>';
-			
-
-			
-			// Check whether the most recent message to contact has been viewed
-			if (sent==true) {
-				if (message.viewed == 0) {
-					var tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
-				} else {
-					var tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
-				}
-			}
-
-			var preview = message.message;
-			if (preview.length >= 30) preview=preview.substr(0,30) + "...";
-			newHTML += '<img src="' + current_message.icon.small + '" alt="" /><div class="meta"><p class="name">';
-			newHTML += current_message.username + '</p><p class="preview">';
-			if (sent) {
-				newHTML += tick;
-			} else {
-				// Check whether the most recent unread message was to or from
-				if (message.viewed == 0 && ( message.message_to.guid == <?php echo ossn_loggedin_user()->guid; ?> )) {
-					newHTML += '<i class="fa fa-comment contact-new" aria-hidden="true"></i>';
-				}
-			}
-			if (preview[0] == '{') {
-				newHTML += '<i class=\"fa fa-picture-o giphy-preview\" aria-hidden=\"true\"></i>GIF';
-			} else {
-				newHTML +=  preview;
-			}
-			newHTML += '</p></div><section class="message_time">' + message.elapsed + '</section></div>';
-
-			$('.clones li.contact').clone(true,true).html(newHTML).attr("id",withguid).appendTo("#contacts ul"); 
-		});
-	 });
-};			
-				
-function checkNotifs(){
-	if ( notifs_running == false ) {
-		notifs_running = true; 
-		var activeContact_copy = document.getElementById('activeContact').value;
-		$.ajax({
-			url: '<?php echo ossn_site_url("chat_api"); ?>',
-			data: {action: "notifs", currentuser: activeContact_copy, guid: <?php echo ossn_loggedin_user()->guid;?> , notifs: notifcount},
-			type: 'POST',
-			dataType: 'json',
-			success:  function(returnedData) {
-				if (returnedData.success === true){
-					var oldPayload = JSON.stringify(JSON.parse(notifcount).payload);
-					var newPayload = JSON.stringify(JSON.parse(JSON.stringify(returnedData.payload.payload)));
-					
-					if (newPayload != oldPayload) {
-						if (returnedData.current_chat == true){
-							listMessages (document.getElementById('activeContact').value);
-						}
-
-						var unseen_notification = false;						
-						$.each(returnedData.payload, function(i, item) {
-							if (i==="payload") {
-								if (item.length){
-									$.each(item, function(thread, v) {
-										if ( $("#contacts ul").find( "#" + item[thread].message_from + " .contact-new").length ) {
-										} else {								
-											if (returnedData.current_chat == true && item[thread].message_from === activeContact_copy){
-											} else {
-												unseen_notification = true;
-											};
-										}
-									});
-								};
-							}
-						});
-										
-						if (unseen_notification == true) {
-							recentMessages();
-							var audioElement = $("#newmessage");
-							// Only play sound if user hasn't changed the active thread since the check started
-							if (activeContact_copy == document.getElementById('activeContact').value) audioElement.get(0).play(); 
-							notifcount = JSON.stringify(returnedData.payload); // If the previous message count is different from the current, we'll take a copy
-						}
-						
-						// After processing the notification, copy it for future checks.
-						notifcount = JSON.stringify(returnedData.payload);						
-					}
-				} else {
-					// No unread messages, so resetting notifcount to empty
-					temp = JSON.parse(notifcount);
-					temp.payload = '[]';
-					notifcount= JSON.stringify(temp);
-				}
-
-				// Update everybodies status
-				jQuery.each(JSON.parse(returnedData.statuses), function(i, val) {
-				  if (val == true) {
-					$('#' + i + ' div span.contact-status').addClass('online');
-					$('#' + i + ' div span.contact-status').removeClass('busy');
-				  } else {
-					$('#' + i + ' div span.contact-status').addClass('busy');
-					$('#' + i + ' div span.contact-status').removeClass('online');
-				  }
-				});
-				
-				running=false;
-			},
-			error: function(jqXHR, textStatus, errorThrown) {
-				console.log(errorThrown);
-			}
-		});
-		notifs_running = false;
-	}
-};
 var running = false;
-
+var owner = null;
 var loadingMore = false
+
 function loadMore(offset) {
 	if (loadingMore === false) {
 	  loadingMore = true;
@@ -826,19 +406,16 @@ function loadMore(offset) {
 	  loadingMore = false;
     }
 }
+
 setInterval(function() {
   // Check whether there are new mail notifications
 	if (running == false) {
 		running = true;
-		checkNotifs();
+		//checkNotifs();
 	}
 }, 3000); 
 
-// Click the SEND button
-$('.send').click(function() {
-  newMessage();
-  return false;
-});
+
 
 var inputStartHeight = parseInt($('#main-input').css("height"),10);
 var miniHeight = 5;
@@ -860,8 +437,9 @@ $('#main-input').on('input', function () {
 		
  });
 
-// Homescreen installation
-/* if (/chrome/i.test(navigator.userAgent)) {
+// Homescreen installation //
+/*
+ if (/chrome/i.test(navigator.userAgent)) {
 	console.log ("Chrome detected. Adding button to menu.");
 	$(".clones .siteappinstaller-install-button").clone(true,true).appendTo($('#bottom-bar'));
 
@@ -899,38 +477,1389 @@ $('#main-input').on('input', function () {
 		})
 	}
 } */
-	/* NEW SECTION FOR WebChat Class based functionality  */
 
-/* Page Ready functions */
+/* VARIABLES FOR JAVASCRIPT / JQUERY */
+webchat_root = "<?php echo $path_wcroot; ?>";
+var friends = null;
+var images_path = "<?php echo ossn_site_url('images'); ?>";
+
+/* PAGE READY */
 $(function() {
+	/// Lets check what page we have come in to visit
+	<!-- var pathname = window.location.pathname; // Returns path only (/path/example.html) -->
+	<!-- root_remove = webchat_root.split("/"); -->
+	<!-- pathname = pathname.split("/"); -->
+	<!-- pathname = pathname.filter( ( el ) => !root_remove.includes( el ) ); -->
+	<!-- var pages = []; -->
+	<!-- for (var i = 0; i < pathname.length; i += 2) { -->
+	  <!-- pages[pathname[i]] = pathname[i+1]; -->
+	<!-- } -->
+	
+	<!-- if (pages["group"]) { -->
+		<!-- $('li.contact').removeClass("active"); -->
+		<!-- $(this).find(".contact-new").remove(); -->
+		<!-- $(this).addClass("active"); -->
+		<!-- withguid = parseInt(pages["group"]); -->
+		<!-- updateActive(withguid); -->
+		<!-- $("#messages ul").empty(); -->
+		<!-- wcGetFriends(2,withguid); -->
+
+		<!-- setTimeout(function(){ -->
+		  <!-- $("#sidepanel").removeClass("onFromLeft"); -->
+		  <!-- $("#sidepanel").addClass("outLeft"); -->
+		  <!-- $("#frame .content").removeClass("outRight"); -->
+		  <!-- $("#frame .content").addClass("onFromRight"); -->
+		<!-- }); -->
+	<!-- } else { -->
+		wcGetFriends(1);
+	<!-- } -->
+	//$('#group_image_button').hide();
 });
 
-$('#addChat').click(function() {
-	$('#addChatMenu').addClass('show');
+/* CLICK EVENTS */
+$('div.url_preview').on('click', function () {																// Clicking URL Preview
+	var win = window.open($(this).attr('data-url'), '_blank');
+	win.focus();
 });
-$('#addChatMenu .wrap header i').click(function() {
+$('#message-input .wrap .send').click(function() {															// Click the SEND button
+  wcNewMessage();
+  return false;
+});
+$('#addChat').click(function() {																			// Click the create new group button
+	event.preventDefault();
+	wcGetContacts(0);
+});
+$('#addChatMenu .wrap header i').click(function() {															// Dismiss the create new group dialog
+	event.preventDefault();
 	$('#addChatMenu').removeClass('show');
 });
-$('#addChatMenu .wrap ul.contacts li').click(function() {
-	if ($(this).parent().attr('class')=='contacts') {
-		$(this).appendTo('#addChatMenu .wrap ul.newMembers');
-	} else {
-		$(this).appendTo('#addChatMenu .wrap ul.contacts');
-		sortUL('#addChatMenu .wrap ul.contacts');
+$('#addPhotoMenu .wrap header i').click(function() {														// Dismiss the addPhoto menu dialog
+	event.preventDefault();
+	$('#addPhotoMenu').removeClass('show');
+});
+$('.chatadd-button i').click(function() {																	// Confirm and create the new group
+	event.preventDefault();
+	var guids = null;
+	var type = null;
+	newGroup = false;
+	editGroup = false;
+	
+	/// IF WE ARE EDITING //
+	if ($('.chatadd-button i').hasClass('edit')) {
+		editGroup = true;
+		guids = $('#addChatMenu .wrap ul.newMembers li.addContact').map(function() { 
+			if ($(this).attr('data-type') == 'new') return $(this).attr('data-guid'); 
+		}).get().join(', ');
+		name = $('#addChatMenu .wrap input').val();
+
+		removes = $('#addChatMenu .wrap ul.contacts li.addContact').map(function() { 
+			if ($(this).attr('data-type') == 'current') return $(this).attr('data-guid'); 
+		}).get().join(', ');	
+
+	} else if ($('.chatadd-button i').hasClass('new')) {
+		newGroup = true;
+		guids = $('#addChatMenu .wrap ul.newMembers li.addContact').map(function() { 
+		 return $(this).attr('data-guid'); 
+		}).get().join(', ');	
+	}
+
+	if (!$('.chatadd-button i').hasClass('view')) {
+		name = $('#addChatMenu .wrap input').val();	
+		if (newGroup) removes = null;
+		
+		if ((newGroup & !guids) || (editGroup & !guids & !removes)) {
+				$(".cd-popup legend").html("<?php echo ossn_print('com:webchat:group:adderror'); ?>");
+				if (editGroup) $(".cd-popup p").html("<?php echo ossn_print('com:webchat:group:noselection'); ?>");
+				if (newGroup)  $(".cd-popup p").html("<?php echo ossn_print('com:webchat:group:nomembers'); ?>");
+				$(".cd-popup .dialog-yes").hide();
+				$(".cd-popup .dialog-no").show();
+				$(".cd-popup .dialog-no").text("<?php echo ossn_print('com:webchat:generic:ok'); ?>");
+				$(".cd-popup").addClass("show");
+				$(".cd-popup-fade").addClass("show");  
+		} else {
+			$('#addChatMenu').removeClass('show');
+			if ($('.chatadd-button i').hasClass('edit')) {
+				if (guids) wcAddMembers(guids);
+				if (removes) {
+					cdPopup("<?php echo ossn_print('com:webchat:generic:sure'); ?>",
+					"<?php echo ossn_print('com:webchat:group:removeanddelete'); ?>",
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					"callback_wcRemoveMembers('" + removes.toString() + "');",
+					true,
+					"<?php echo ossn_print('com:webchat:generic:cancel'); ?>",
+					"callback_wcRemoveMembers(false);");	
+				}
+			} else if ($('.chatadd-button i').hasClass('new')) {
+				wcCreateGroup(name, guids);
+			}
+		}
 	}
 });
-$('#addChatMenu .wrap ul.newMembers li').click(function() {
-	if ($(this).parent().attr('class')=='contacts') {
-		$(this).appendTo('#addChatMenu .wrap ul.newMembers');
+$('.addContact').click(function() {																			// Click a user name to add to a new group
+	event.preventDefault();
+	if ($(this).hasClass('delegate')) {
+			if ($('.chatadd-button i').hasClass('edit')) {
+				cdPopup("<?php echo ossn_print('com:webchat:generic:sure'); ?>",
+				"<?php echo ossn_print('com:webchat:group:delegate:confirm'); ?>",
+				true,
+				"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+				"callback_wcDelegate('" + $(this).attr('data-guid') + "');",
+				true,
+				"<?php echo ossn_print('com:webchat:generic:cancel'); ?>",
+				"callback_cancel();");	 
+			}
+	} 
+	else if (!$(this).hasClass('view')) {
+		if ($(this).parent().attr('class')=='contacts') {
+			$(this).appendTo('#addChatMenu .wrap ul.newMembers');
+		} else {
+			$(this).appendTo('#addChatMenu .wrap ul.contacts');
+			sortUL('#addChatMenu .wrap ul.contacts');
+		}
+	}
+});
+$('i.delphoto').click(function() {																			// Click the delete photo button
+	event.preventDefault();
+	var photoid = $(this).attr('data-id');
+
+	$('#addChatMenu').removeClass('show');
+
+	cdPopup("<?php echo ossn_print('com:webchat:generic:sure'); ?>",
+	"<?php echo ossn_print('com:webchat:group:deletephoto'); ?>",
+	true,
+	"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+	"callback_wcDeletePhoto('" + photoid + "');",
+	true,
+	"<?php echo ossn_print('com:webchat:generic:cancel'); ?>",
+	"callback_cancel();");	
+
+});	
+$( "body" ).click(function( event ) {																		// Clicking outside of the emoji selection panel makes it disappear
+	var target = $(event.target);    
+	if (target.parents('div.messages, div.message-input, .back-arrow').length || (event.target.id == 'media-options')) {
+		if ($("#message-menu").hasClass("show")) $("#message-menu").removeClass("show");
+	}
+	
+    if ((target.parents('div.messages, div.contact-info').length) || (event.target.id == 'main-input'))  {
+		if ($(".emojiPanel").hasClass("onFromBottom")) {
+			$(".emojiPanel").addClass("outBottom");
+			$(".emojiPanel").removeClass("onFromBottom");
+		}
+		if ($(".giphyPanel").hasClass("onFromBottomGiphy")) {
+			$(".giphyPanel").addClass("outBottomGiphy");
+			$(".giphyPanel").removeClass("onFromBottomGiphy");
+		}
+		$("#messages").removeClass("emoji");
+		$("#messages").removeClass("giphy");
+
+    }
+});
+$("#emojiPanel").click(function(e) {																		// Click the emoji icon for the emoji selector panel to appear
+	$(".emojiPanel").addClass("onFromBottom").focus();
+	$(".emojiPanel").removeClass("outBottom");
+	$(".giphyPanel").addClass("outBottomGiphy");
+	$(".giphyPanel").removeClass("onFromBottomGiphy").focus();
+	$("#messages").addClass("emoji");
+	$("#messages").removeClass("giphy");	
+	var d = $("div.messages");
+	d.scrollTop(d.prop("scrollHeight"));
+});
+$("#fullscreen").click(function() {																			// Toggle fullscreen
+
+	toggleFullScreen();
+	<!-- if (amIMobile()) { -->
+		<!-- if (amIFullscreen) { -->
+			<!-- $("#frame #sidepanel #bottom-bar").css("bottom","0"); -->
+			<!-- $("#bottom-bar-photo").css("bottom","0"); -->
+		<!-- } else { -->
+			<!-- $("#frame #sidepanel #bottom-bar").removeAttr("style"); -->
+			<!-- $("#bottom-bar-photo").removeAttr("style"); -->
+		<!-- } -->
+	<!-- } -->
+});
+$("#group_image_button").click(function() {
+	$("#group_image").click();
+});
+$("#group_image_select").click(function() {
+	wcSelectGroupPhoto($(".giphy-fs-container .giphy-fs-image img").attr('src'));
+	dismissFsContainer();
+});
+$("#group_image").change(function() {
+	dismissFsContainer();
+	//$('#group_image_button').hide();
+	wcSetGroupPhoto(2);
+});
+$("#image-upload").change(function() {
+	dismissFsContainer();
+	wcNewMessage(3,$(this).val());
+});
+
+/* CALLBACKS */
+function callback_wcDeletePhoto(photoid) {																	// Confirm deleting photo from group
+	$(".cd-popup .dialog-yes").attr('onclick','');
+	$(".cd-popup .dialog-no").attr('onclick','');
+	$(".cd-popup").removeClass("show");
+	$(".cd-popup-fade").removeClass("show"); 	
+	if (photoid) wcDeletePhoto(photoid);
+}
+function callback_wcLeaveGroup(selected) {																	// Confirm leaving group
+	$(".cd-popup .dialog-yes").attr('onclick','');
+	$(".cd-popup .dialog-no").attr('onclick','');
+	$(".cd-popup").removeClass("show");
+	$(".cd-popup-fade").removeClass("show"); 	
+	if (selected) wcLeaveGroup();
+}
+function callback_wcRemoveMembers(removes) {																// Confirm member removal
+	$(".cd-popup .dialog-yes").attr('onclick','');
+	$(".cd-popup .dialog-no").attr('onclick','');
+	$(".cd-popup").removeClass("show");
+	$(".cd-popup-fade").removeClass("show"); 	
+	if (removes) wcRemoveMembers(removes);
+}
+function callback_wcDelegate(userid) {																		// Click ok to confirm new Admin
+	$(".cd-popup .dialog-yes").attr('onclick','');
+	$(".cd-popup .dialog-no").attr('onclick','');
+	$(".cd-popup").removeClass("show");
+	$(".cd-popup-fade").removeClass("show"); 	
+	if (userid) wcDelegate(userid);
+	dismissAddChatMenu()	
+}
+function callback_cancel() {																				// Cancel the form dialog
+	$(".cd-popup .dialog-yes").attr('onclick','');
+	$(".cd-popup .dialog-no").attr('onclick','');
+	$(".cd-popup").removeClass("show");
+	$(".cd-popup-fade").removeClass("show"); 
+}
+
+/* WEBCHAT API FUNCTIONS */
+function wcGetContacts(type = 0){	
+	// Type 0 = Default "Add Chat" form
+	// 		1 = Edit Chat form
+	//		2 = View members
+	//		3 = Delegate new group owner
+	
+	// Reset the form before making any changes
+	$("#addChatMenu .wrap ul.contacts").empty();
+	$("#addChatMenu #groupName").val('');
+	$("#addChatMenu .newMembersContainer ul.newMembers").empty();
+	$('#addChatMenu wrap').removeClass('view');
+	$('.chatadd-button').hide();	
+
+	// Setup the form for the type requested
+	if (type == 1) {
+		console.log ("Edit Members");
+		$('#addChatMenu .wrap header p').text('<?php echo ossn_print("com:webchat:group:editchat"); ?>');
+		$("#addChatMenu #groupName").attr('placeholder',($('.contact-profile .groupinfo p.groupname').text()));
+		$("#addChatMenu #groupName").prop( "disabled", true );
+		$('.chatadd-button i').removeClass('new');
+		$('.chatadd-button i').addClass('edit');
+		$('.chatadd-button').show();		
+										  
+		$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getGroupMembers", groupid : $("#activeContact").val().toString()})
+			.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+			if (data != false) {
+			obj = JSON.parse(data);
+				data = JSON.parse(data);
+				if (data[0].status == "Success") {
+					$.each(data[0].payload.members, function(i,contact) {
+						if (i != <?php echo ossn_loggedin_user()->guid; ?> ){
+							temp = $(".clones .addContact").clone(true,true).attr("data-guid", i).appendTo("#addChatMenu .wrap ul.newMembers");
+							$(temp).find("img").attr("src", data[0].payload.members[i].icon);
+							$(temp).attr("data-type", "current");
+							$(temp).find(".name").text(data[0].payload.members[i].name);
+						}
+					});
+
+					// Lets remove users from the friends list that already exist as members
+					var toRemove = [];
+					$.each(data[0].payload.members, function(m,member) {
+						$.each(data[0].payload.friends, function(f,friend) {
+							if (m == f) toRemove.push(f);
+						});
+					});
+
+					$.each(data[0].payload.friends, function(i,contact) {
+						if (!intInArray(toRemove, i)) {
+							temp = $(".clones .addContact").clone(true,true).attr("data-guid", i).appendTo("#addChatMenu .wrap ul.contacts");
+							$(temp).find("img").attr("src", data[0].payload.friends[i].icon);
+							$(temp).attr("data-type", "new");
+							$(temp).find(".name").text(data[0].payload.friends[i].name);
+						}
+					});
+					$('#addChatMenu').addClass('show');
+				} else {
+					$(".cd-popup legend").html(data[0].status);
+					$(".cd-popup p").html(data[0].message);
+					$(".cd-popup .dialog-yes").hide();
+					$(".cd-popup").addClass("show");
+					$(".cd-popup-fade").addClass("show");   
+				}
+			};
+		});
+	}
+	else if (type == 2) {
+		$('#addChatMenu header p').text('<?php echo ossn_print('com:webchat:group:viewchat'); ?>');
+		$("#addChatMenu #groupName").attr('placeholder',($('.contact-profile .groupinfo p.groupname').text()));
+		$("#addChatMenu #groupName").prop( "disabled", true );
+		$('.chatadd-button i').removeClass('new');
+		$('.chatadd-button i').addClass('edit');
+		$('.chatadd-button').hide();
+		$('#addChatMenu .wrap').addClass('view');
+		
+		$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getGroupMembers", groupid : $("#activeContact").val().toString()})
+			.fail(function() {
+			// This may need to be remove when PWA is enabled - as that should use local cache whilst offline rather than trying to constantly refresh. 
+				location.reload();
+			})
+	.done(function( data ) {
+			if (data != false) {
+			obj = JSON.parse(data);
+				data = JSON.parse(data);
+				if (data[0].status == "Success") {
+					$.each(data[0].payload.members, function(i,contact) {
+						if (i != <?php echo ossn_loggedin_user()->guid; ?> ){
+							temp = $(".clones .addContact").clone(true,true).attr("data-guid", i).appendTo("#addChatMenu .wrap ul.contacts");
+							$(temp).find("img").attr("src", data[0].payload.members[i].icon);
+							$(temp).attr("data-type", "view");
+							$(temp).addClass("view");
+							$(temp).find(".name").text(data[0].payload.members[i].name);
+						}
+					});
+
+					$('#addChatMenu').addClass('show');
+				} else {
+					$(".cd-popup legend").html(data[0].status);
+					$(".cd-popup p").html(data[0].message);
+					$(".cd-popup .dialog-yes").hide();
+					$(".cd-popup").addClass("show");
+					$(".cd-popup-fade").addClass("show");   
+				}
+			};
+		});
+	} 
+	else if (type == 3) {
+		$('#addChatMenu header p').text('<?php echo ossn_print('com:webchat:group:delegate'); ?>');
+		$("#addChatMenu #groupName").attr('placeholder',($('.contact-profile .groupinfo p.groupname').text()));
+		$("#addChatMenu #groupName").prop( "disabled", true );
+		$('.chatadd-button i').removeClass('new');
+		$('.chatadd-button i').addClass('edit');
+		$('.chatadd-button').hide();
+		$('#addChatMenu .wrap').addClass('view');
+		$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getGroupMembers", groupid : $("#activeContact").val().toString()})
+			.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+			if (data != false) {
+			obj = JSON.parse(data);
+				data = JSON.parse(data);
+				if (data[0].status == "Success") {
+					$.each(data[0].payload.members, function(i,contact) {
+						if (i != <?php echo ossn_loggedin_user()->guid; ?> ){
+							temp = $(".clones .addContact").clone(true,true).attr("data-guid", i).appendTo("#addChatMenu .wrap ul.contacts");
+							$(temp).find("img").attr("src", data[0].payload.members[i].icon);
+							$(temp).attr("data-type", "delegate");
+							$(temp).addClass("delegate");
+							$(temp).find(".name").text(data[0].payload.members[i].name);
+						}
+					});
+
+					$('#addChatMenu').addClass('show');
+				} else {
+					$(".cd-popup legend").html(data[0].status);
+					$(".cd-popup p").html(data[0].message);
+					$(".cd-popup .dialog-yes").hide();
+					$(".cd-popup").addClass("show");
+					$(".cd-popup-fade").addClass("show");   
+				}
+			};
+		});
+	} 
+	else {
+		$("#addChatMenu #groupName").prop('disabled', false );
+		$('#addChatMenu header p').text('<?php echo ossn_print('com:webchat:group:newchat'); ?>');
+		$("#addChatMenu #groupName").attr('placeholder','<?php echo ossn_print('com:webchat:group:rename:placeholder'); ?>');
+		$('.chatadd-button i').addClass('new');
+		$('.chatadd-button i').removeClass('edit');
+		$('.chatadd-button').show();
+		
+		$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getContacts"})
+		 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+			if (data != false) {
+			obj = JSON.parse(data);
+				$.each(obj, function(i,contact) {
+					temp = $(".clones .addContact").clone(true,true).attr("data-guid", i).appendTo("#addChatMenu .wrap ul.contacts");
+					$(temp).find("img").attr("src", obj[i].icon);
+					$(temp).find(".name").text(obj[i].name);
+				});
+				
+				$('#addChatMenu').addClass('show');
+			};
+		 });
+	}
+};		
+function wcAddMembers(guids){	
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "addMembers", groupid : $("#activeContact").val().toString(), guids: guids})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			obj = JSON.parse(data);
+			data = JSON.parse(data);
+			
+			if (data[0].status == "Success") {
+				wcNewMessage(2, null, null, data[0].payload.message);
+				wcUpdateGroupInfo();
+			} else {
+				cdPopup(data[0].status,
+					data[0].message,
+					false,
+					null,
+					null,
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					null);			
+			}			
+		};
+	 });	
+}
+function wcRemoveMembers(removes){	
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "removeMembers", groupid : $("#activeContact").val().toString(), removes: removes})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			obj = JSON.parse(data);
+			data = JSON.parse(data);
+			if (data[0].status == "Success") {
+				wcNewMessage(2, null, null, data[0].payload.message);
+				wcUpdateGroupInfo();
+			} else {
+				cdPopup(data[0].status,
+					data[0].message,
+					false,
+					null,
+					null,
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					null);			
+			}			
+		};
+	 });	
+}
+function wcDeletePhoto(photoid){
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "deletePhoto", groupid : $("#activeContact").val().toString(), photoid: photoid})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			obj = JSON.parse(data);
+			data = JSON.parse(data);
+			if (data[0].status == "Success") {
+				var photos = $('.group-photos-container ul li.group-photo').filter(function() {
+				  if ($(this).attr('data-id') === photoid) {
+					$(this).remove();
+				  }
+				  wcUpdateGroupInfo();
+				  return
+				});
+			} else {
+				cdPopup(data[0].status,
+					data[0].message,
+					false,
+					null,
+					null,
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					null);			
+			}			
+		};
+	 });	
+};
+function wcLeaveGroup(){	
+	var groupid = $('#activeContact').val();
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "leaveGroup", groupid: groupid})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+	   
+		data = JSON.parse(data);
+		if (data[0].status == "Success") {
+			$(".cd-popup legend").html(data[0].status);
+			$(".cd-popup p").html(data[0].message);
+			$(".cd-popup .dialog-yes").hide();
+			$(".cd-popup .dialog-no").show();
+			$(".cd-popup .dialog-no").text("<?php echo ossn_print('com:webchat:generic:ok'); ?>");
+		    $(".cd-popup").addClass("show");
+		    $(".cd-popup-fade").addClass("show");
+			$(".back-arrow").click();
+			wcNewMessage(2, null, null, data[0].payload.message);
+		} else {
+			$(".cd-popup legend").html(data[0].status);
+			$(".cd-popup p").html(data[0].message);
+			$(".cd-popup .dialog-yes").hide();
+		    $(".cd-popup").addClass("show");
+		    $(".cd-popup-fade").addClass("show");   
+		}
+	});
+};
+function wcDelegate(userid){	
+	var groupid = $('#activeContact').val();
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "delegateAdmin", userid: userid, groupid: groupid})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+	   
+		data = JSON.parse(data);
+		if (data[0].status == "Success") {
+			$(".cd-popup legend").html(data[0].status);
+			$(".cd-popup p").html(data[0].message);
+			$(".cd-popup .dialog-yes").hide();
+			$(".cd-popup .dialog-no").show();
+			$(".cd-popup .dialog-no").text("<?php echo ossn_print('com:webchat:generic:ok'); ?>");
+		    $(".cd-popup").addClass("show");
+		    $(".cd-popup-fade").addClass("show");
+			$(".back-arrow").click();
+			wcNewMessage(2, null, null, data[0].payload.message);
+			dismissFsContainer();
+		} else {
+			$(".cd-popup legend").html(data[0].status);
+			$(".cd-popup p").html(data[0].message);
+			$(".cd-popup .dialog-yes").hide();
+		    $(".cd-popup").addClass("show");
+		    $(".cd-popup-fade").addClass("show");   
+		}
+	});
+};
+function wcCreateGroup(name, guids){
+	var groupid = $.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "createGroup", guids: guids, name: name})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function(data) {
+	 
+		data = JSON.parse(data);
+		if (data[0].status == "Success") {		
+			cdPopup (	data[0].status,
+						data[0].message,
+						false,
+						false,
+						false,
+						true,
+						"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+						false);
+			wcGetFriends(1);
+		} else {
+			cdPopup (	data[0].status,
+						data[0].message,
+						false,
+						false,
+						false,
+						true,
+						"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+						false);  
+		}
+		return;
+	 });
+};
+function wcGetGroups(){
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getGroups"})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			obj = JSON.parse(data);
+			$("#contacts ul").empty();
+			$.each(obj, function(i,contact) {
+				temp = $(".clones .contact").clone(true,true).attr("data-guid", i).appendTo("#contacts ul");
+				$(temp).attr("id", obj[i].groupid);
+				$(temp).attr("data-owner", obj[i].owner);
+				
+				// Do we have a photo to display?
+				if (obj[i].photo !== null & obj[i].photo != "") { 
+					fullimgpath = "<?php echo ossn_site_url('images/groups/'); ?>" + obj[i].groupid + "/" + obj[i].photo;
+					$(temp).find("img").attr("src",fullimgpath);
+				} else {
+					$(temp).find("img").attr("src","<?php echo $path_img; ?>/group-icon.png");
+				}
+				$(temp).find(".meta .name").text(obj[i].name);
+				
+				if (obj[i].preview) {
+					if (decodeEntities(obj[i].preview).substr(0, 7) == '{"img":') obj[i].preview = '<i class="fa fa-picture-o"></i> IMAGE';
+					if (obj[i].message_from == 0) {
+						fullname = "Info";
+					} else {
+						fullname = friends[obj[i].message_from].fullname;
+					}
+					$(temp).find(".meta .preview").html(fullname + " : " + obj[i].preview);
+					$(temp).find("section.message_time").text(obj[i].elapsed);
+				}
+			});
+		}
+	 });
+};
+function wcGetFriends(cb = 0, groupid){
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getFriends"})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			friends = JSON.parse(data);
+		}
+		if (cb == 1) wcGetGroups();
+		if (cb == 2) wcGetGroupMessages(groupid);
+	 });
+};
+function wcUpdateGroupInfo(){
+	var d = $(".messages");
+	var groupid = $('#activeContact').val();
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getGroup", groupid: groupid})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			group = JSON.parse(data);
+		    $("div.contact-profile p.groupname").html(group[0].name);
+			<!-- // Do we have a photo to display? -->
+			if (group[0].photo != null & group[0].photo != "") {
+				fullimgpath = "<?php echo ossn_site_url('images/groups/'); ?>" + group[0].id + "/" + group[0].photo;
+				$("div.contact-profile img").attr("src",fullimgpath);
+			} else {
+				$("div.contact-profile img").attr("src","<?php echo $path_img; ?>/group-icon.png");
+			}			
+			var array = []; 
+			var count = 0;
+			$.each(group.members, function(i,contact) {
+				count = count + 1;
+				array.push(friends[group.members[i].userid].fullname);
+			});
+
+			if (count > 1) {
+				groupmembers = natural_language_join(array);
+			} else {
+				groupmembers = array[0];
+			}
+			$("div.contact-profile p.groupmembers").html(groupmembers);
+		}
+	 });
+};
+function wcGetGroupMessages(groupid){
+	$('#activeContact').val(groupid);
+	var d = $(".messages");
+	
+	wcUpdateGroupInfo();
+	$('#media-options #message-menu ul .group-viewer-buttons').remove();	 
+	$('#media-options #message-menu ul .group-owner-buttons').remove();
+			
+	if (owner == <?php echo ossn_loggedin_user()->guid; ?>) {
+		$('.clones #message-menu ul .group-owner-buttons').clone(true, true).prependTo("#media-options #message-menu ul");
 	} else {
-		$(this).appendTo('#addChatMenu .wrap ul.contacts');
-		sortUL('#addChatMenu .wrap ul.contacts');
+		$('.clones #message-menu ul .group-viewer-buttons').clone(true, true).prependTo("#media-options #message-menu ul");
+	}
+	
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getGroupMessages", groupid: groupid})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			obj = JSON.parse(data);
+			
+			$.each(obj, function(i,contact) {
+				temp = $(".clones li.message").clone(true,true).appendTo("#messages ul");
+
+				if (obj[i].preview) {
+					var preview = obj[i].preview;
+					urlPreview = $('.clones .url_preview').clone(true,true).prependTo($(temp));
+					if (preview.url !=  null) $(urlPreview).attr('data-url',preview.url);
+					if (preview.sitename !=  null) $(urlPreview).find("p.sitename").html('<i class="fa fa-globe" aria-hidden="true"></i> ' + preview.sitename);
+					if (preview.title !=  null) $(urlPreview).find("p.title").html(preview.title);
+					if (preview.description !=  null)$(urlPreview).find("p.description").html(preview.description);
+					if (preview.image == null || preview.image == "No image found") {
+						<!-- $(urlPreview).find("img.url_image").remove(); -->
+					} else {
+						var thumburl = preview.image;
+						if ($.isNumeric(preview.image[0])) thumburl = "<?php echo ossn_site_url('images/users/'); ?>" + preview.image;
+						$(urlPreview).find("img.url_image").attr('src',thumburl);
+
+						if (preview.thumbcolour != null) {
+							$(urlPreview).find("img.url_image").css("background-color",preview.thumbcolour);
+						}
+					}
+					
+					if (preview.url != null) {
+						let str = obj[i].message;
+						let newStr = str.replace(preview.url + ' ','');			
+						<!-- obj[i].message = text; -->
+						obj[i].message = str.replace(preview.url + ' ','');
+					}
+				}
+				if (obj[i].message_from == <?php echo ossn_loggedin_user()->guid; ?>) {
+					var response = false;
+					$(temp).addClass("sent");
+					$(temp).find("article .name").remove();
+					$(temp).find("img.profile").remove();
+				} else {
+					var response = true;
+					if (obj[i].message_from == 0) {
+						$(temp).addClass("info");		
+						$(temp).find("article .name").remove();
+						$(temp).find("img.profile").remove();						
+						$(temp).find("img.giphy").remove();						
+					} else {
+						$(temp).addClass("replies");
+						$(temp).find("article .name .section_name_span").html(friends[obj[i].message_from].fullname);
+						$(temp).find("img.profile").attr("src",friends[obj[i].message_from].iconsmall);
+					}
+				}
+				
+				var jsonmsg = decodeEntities(obj[i].message); 
+
+				if (isJSON(jsonmsg) & (jsonmsg.charAt(0) == '{')) {
+					jsonmsg = JSON.parse(jsonmsg);
+					$(temp).addClass("giphy");
+					$(temp).find("article").addClass("giphy");
+					$(temp).find("img.giphy").attr("og",jsonmsg.bigImg);
+					$(temp).find("img.giphy").attr("src",jsonmsg.img);
+					$(temp).find("article .message").remove();
+					if (response) {
+						$(temp).find("article").prepend('<div class="fade-top"></div>');
+					}
+					$(temp).find("article").append('<div class="fade-bottom"></div>');
+				} else {
+					if (obj[i].message.length==9 & obj[i].message.codePointAt(0) == 38 & obj[i].message.codePointAt(1) == 35 & obj[i].message.codePointAt(2) == 120 ) temp.find(".message").addClass("lg-emoji");
+					$(temp).find("article .message").html(obj[i].message);
+				}
+			
+				$(temp).attr("data-id", obj[i].id);				
+				$(temp).find("article .message_time").text(obj[i].elapsed);
+				
+			});
+			
+			// Set scroll position to bottom of newly added messages
+			$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
+			running = false;
+		};
+	 });
+};
+function wcNewMessage(type = 0, giphyImg = null, giphyBig = null, infoMsg = null) {
+	// Type 0 - Default, normal text message
+	// Type 1 - GIPHY message
+	// Type 2 - Info message
+	// Type 3 - Upload Image Message
+	
+	console.log ("wcNewMessage "+type+" message: "+infoMsg);
+	$(".emojiPanel").addClass("outBottom");
+	$(".emojiPanel").removeClass("onFromBottom");
+	$("#messages").removeClass("emoji");
+
+	var activeContact = document.getElementById('activeContact').value;	
+	var newmsg = $('.clones li.message').clone(true,true).appendTo(".messages ul");
+	var info = null
+	
+	if (type == 2) {
+		message = infoMsg;
+		$(newmsg).addClass("info");
+		info = 'info';
+	} else {
+		message = $("#main-input").val();
+		$(newmsg).addClass("sent");		
+	}
+	
+	$(newmsg).find("img.profile").remove();
+	if (type == 1) {  // GIPHY Message
+		$(newmsg).find("article").addClass("giphy");
+		$(newmsg).addClass("giphy");
+		$(newmsg).find("article").addClass("giphy");
+		$(newmsg).find("article .message").remove();
+		$(newmsg).find("article").append('<div class="fade-bottom"></div>');
+					
+		$(newmsg).find("img.giphy").attr("og",giphyBig);
+		$(newmsg).find("img.giphy").attr("src",giphyImg);
+		message = '{"img": "' + giphyImg + '", "bigImg": "' + giphyBig + '"}';
+
+	}
+	else if (type == 3) {  // Upload Photo
+	
+		var file_data = $('#image-upload').prop('files')[0];
+		var form_data = new FormData();
+		form_data.append('image-upload', file_data);
+		$.ajax({
+			url: '<?php echo ossn_site_url('chat_api'); ?>' + tokenurl + '&action=getThumbs&groupid=' + $("#activeContact").val().toString(), // point to server-side controller method
+			dataType: 'text', // what to expect back from the server
+			cache: false,
+			contentType: false,
+			processData: false,
+			data: form_data,
+			type: 'post',
+			success: function (data) {
+				data = JSON.parse(data);
+
+				$('#image-upload').val('');
+				
+				if (data[0].status == "Success") {
+					$(newmsg).find("article").addClass("giphy");
+					$(newmsg).addClass("giphy");
+					$(newmsg).find("article").addClass("giphy");
+					$(newmsg).find("article .message").remove();
+					$(newmsg).find("article").append('<div class="fade-bottom"></div>');
+					var hdpath = images_path + data[0].payload.hd;
+					var thumbpath = images_path + data[0].payload.thumb;
+					$(newmsg).find("img.giphy").attr("og",hdpath);
+					$(newmsg).find("img.giphy").attr("src",thumbpath);
+					message = '{"img": "' + thumbpath + '", "bigImg": "' + hdpath + '"}';	
+					$(newmsg).find("section.message_time").text("Just now");
+					
+					$.post("<?php echo ossn_site_url('chat_api'); ?>" + tokenurl,
+					{
+					  action: 'send',  
+					  group: activeContact,
+					  message: message,
+					  status: info
+					});
+					$('#main-input').val(null).blur();
+					$('#main-input').css("height","15px");
+					$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
+					$("#frame .content .message-input .wrap .fa").css("bottom","-32px");				
+
+					// Scroll to show the new message
+					var d = $("div.messages");		
+					$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
+					return;
+				} else {
+					$(".cd-popup legend").html(data[0].status);
+					$(".cd-popup p").html(data[0].message);
+					$(".cd-popup .dialog-yes").hide();
+					$(".cd-popup").addClass("show");
+					$(".cd-popup-fade").addClass("show"); 
+					return false;
+				}
+			}
+		});	
+	}
+	else {  // Everything else
+		if($.trim(message) == '') {
+			return false;
+		}
+		if (message.length==2 & message.codePointAt(0) > 128000 ) $(newmsg).find("section.message").addClass("lg-emoji");
+		$(newmsg).find("section.message").html(message);
+	}
+	if (type != 3) {
+		$(newmsg).find("section.message_time").text("Just now");
+		
+		// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
+		$('#main-input').val(null).blur();
+		$('#main-input').css("height","15px");
+		$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
+		$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
+
+		$.post("<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: 'send', group: activeContact, message: message, status: info })
+			.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {		
+/*/////////////////////////////////////////////////////////////////////////////*/
+			if (data != false) {
+				obj = JSON.parse(data);
+				if (obj[0].status == "Success") {	
+					if (obj[0].payload.preview){
+						var preview = obj[0].payload.preview;
+						urlPreview = $('.clones .url_preview').clone(true,true).prependTo($(newmsg));
+						$(urlPreview).attr('data-url',preview.url);
+						$(urlPreview).find("p.sitename").html('<i class="fa fa-globe" aria-hidden="true"></i> ' + preview.sitename);
+						$(urlPreview).find("p.title").text(preview.title);
+						$(urlPreview).find("p.description").text(preview.description);
+						if (preview.image == "No image found") {
+							//$(urlPreview).find("img.url_image").remove();
+						} else {
+							var thumburl = preview.image;
+							if ($.isNumeric(preview.image[0])) thumburl = "<?php echo ossn_site_url('images/users/'); ?>" + preview.image;
+							$(urlPreview).find("img.url_image").attr('src',thumburl);
+
+							if (preview.thumbcolour != null) {
+								$(urlPreview).find("img.url_image").css('background-color',preview.thumbcolour);
+							}
+						}
+						<!-- let str = message; -->
+						<!-- let newStr = str.replace(preview.url + ' ',''); -->
+						<!-- $(newmsg).find("section.message").html(str.replace(preview.url + ' ','')); -->
+					}
+				}
+			};
+		});
+/*/////////////////////////////////////////////////////////////////////////////*/
+		// Scroll to show the new message
+		var d = $("div.messages");		
+		$(".messages").animate({ scrollTop: d.prop("scrollHeight") }, "fast");
+	}
+};
+function wcSetGroupPhoto(reloadgroups = 0){
+	/* 	0 = No callback on completion
+		1 = Reload the group list
+		2 = Replace the on-screen group photo
+		*/
+	var file_data = $('#group_image').prop('files')[0];
+	var form_data = new FormData();
+	form_data.append('group_image', file_data);
+	$.ajax({
+		url: '<?php echo ossn_site_url('chat_api'); ?>' + tokenurl + '&action=setGroupPhoto&groupid=' + $("#activeContact").val().toString(), // point to server-side controller method
+		dataType: 'text', // what to expect back from the server
+		cache: false,
+		contentType: false,
+		processData: false,
+		data: form_data,
+		type: 'post',
+		success: function (data) {
+			data = JSON.parse(data);
+
+			$('#group_image').val('');
+			
+			if (data[0].status == "Success") {
+				$(".cd-popup legend").html(data[0].status);
+				$(".cd-popup p").html(data[0].message);
+				$(".cd-popup .dialog-yes").hide();
+				$(".cd-popup .dialog-no").show();
+				$(".cd-popup .dialog-no").text("<?php echo ossn_print('com:webchat:generic:ok'); ?>");
+				$(".cd-popup").addClass("show");
+				$(".cd-popup-fade").addClass("show");
+				$(".cd-popup-input").removeClass("show");
+				
+				if (reloadgroups == 1) {
+					wcGetGroups();
+				} else if (reloadgroups == 2) {
+					$('.contact-profile img').prop('src','<?php echo ossn_site_url('images/groups/'); ?>' + $("#activeContact").val().toString() + "/" + data[0].payload.filename);
+				}
+				wcNewMessage(2, null, null, data[0].payload.message);
+			} else {
+				$(".cd-popup legend").html(data[0].status);
+				$(".cd-popup p").html(data[0].message);
+				$(".cd-popup .dialog-yes").hide();
+				$(".cd-popup").addClass("show");
+				$(".cd-popup-fade").addClass("show");   
+			}
+		}
+	});
+};
+function wcSelectGroupPhoto(selected) {
+	newfile = filename(selected);
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "selectPhoto", groupid : $("#activeContact").val().toString(), selected: newfile})
+			.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+			obj = JSON.parse(data);
+			data = JSON.parse(data);
+			if (data[0].status == "Success") {
+				cdPopup(data[0].status,
+					data[0].message,
+					false,
+					null,
+					null,
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					null);
+				$('#content .contact-profile img').attr('src',selected);
+				wcNewMessage(2, null, null, data[0].payload.message);
+			} else {
+				cdPopup(data[0].status,
+					data[0].message,
+					false,
+					null,
+					null,
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					null);			
+			}			
+		};
+	});
+};
+function wcGetGroupPhotos(){
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "getGroupPhotos", groupid : $("#activeContact").val().toString()})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+		if (data != false) {
+		obj = JSON.parse(data);
+			data = JSON.parse(data);
+			if (data[0].status == "Success") {
+				$.each(data[0].payload, function(i,contact) {
+					temp = $(".clones li.group-photo").clone(true,true).appendTo(".giphy-fs-container .group-photos-container ul");
+					$(temp).html('<img src="<?php echo ossn_site_url('images/groups/'); ?>' + $("#activeContact").val().toString() + '/' + data[0].payload[i].filename + '"></img>');
+					$(temp).attr('data-id',data[0].payload[i].id);
+					$(temp).attr('data-src','<?php echo ossn_site_url('images/groups/'); ?>' + $("#activeContact").val().toString() + '/' + data[0].payload[i].filename);
+					
+					 if (owner == <?php echo ossn_loggedin_user()->guid; ?>) {
+						delphoto = $('.clones .delphoto').clone(true,true).appendTo($(temp));
+						$(delphoto).attr('data-id',data[0].payload[i].id);
+					 }
+				});
+			}
+		};
+	 });
+};	
+function wcRenameGroup(newname){
+	$(".cd-popup").removeClass("show");
+	$(".cd-popup-fade").removeClass("show"); 	
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "renameGroup", groupid : $("#activeContact").val().toString(), name: newname})
+	 	.fail(function() {
+	location.reload();
+	})
+	.done(function( data ) {
+
+		if (data != false) {
+			obj = JSON.parse(data);
+			data = JSON.parse(data);
+			
+			if (data[0].status == "Success") {
+				cdPopup(data[0].status,
+					data[0].message,
+					false,
+					null,
+					null,
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					null);
+
+				$('.contact-profile .groupname').html(data[0].payload.name);
+				wcNewMessage(2, null, null, data[0].payload.message);
+			} else {
+				cdPopup(data[0].status,
+					data[0].message,
+					false,
+					null,
+					null,
+					true,
+					"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+					null);			
+			}			
+		};
+
+	 });
+};	
+	  
+
+///*****  GIPHY *****///
+$("#giphyPanel").click(function(e) {																		// Clicking GIPHY button
+	$(".giphyPanel").addClass("onFromBottomGiphy").focus();
+	$(".giphyPanel").removeClass("outBottomGiphy");
+	$(".emojiPanel").addClass("outBottom");
+	$(".emojiPanel").removeClass("onFromBottom");	
+	$("#messages").removeClass("emoji");
+	$("#messages").addClass("giphy");
+	var d = $("div.messages");
+	d.scrollTop(d.prop("scrollHeight"));
+	
+	var xhr = $.get('<?php echo ( ossn_site_url("giphy"));?>?action=trending');
+	xhr	.fail(function() {
+	location.reload();
+	})
+	.done(function(data) {
+		$('#giphySelector .results').html("");
+		var json_response = JSON.parse(decodeURIComponent(data));
+		var i;
+		for (i = 0; i < 25; i++) {
+		  var hiRes = null;
+		  if (json_response.data[i].images.hd) {
+			hiRes = json_response.data[i].images.hd.url;
+		  } else hiRes = json_response.data[i].images.original.url;
+		  
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + hiRes + '" src="' + json_response.data[i].images.fixed_width_downsampled.url + '">').appendTo($('#giphySelector .results.left'));
+		}
+		for (i = 25; i < 50; i++) {
+		  var hiRes = null;
+		  if (json_response.data[i].images.hd) {
+			hiRes = json_response.data[i].images.hd.url;
+		  } else hiRes = json_response.data[i].images.original.url;
+		  
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + hiRes + '" src="' + json_response.data[i].images.fixed_width_downsampled.url + '">').appendTo($('#giphySelector .results.right'));
+		}
+	});
+});
+$('div.giphy-img').on('click', function () {																// Clicking GIPHY image from results
+	if ($(".giphyPanel").hasClass("onFromBottomGiphy")) {
+		$(".giphyPanel").addClass("outBottomGiphy");
+		$(".giphyPanel").removeClass("onFromBottomGiphy");
+	}		
+	$("#messages").removeClass("giphy");
+	var giphyImg = encodeURI($(this).find("img").attr("src"));
+	var giphyBig = encodeURI($(this).find("img").attr("data-og"));
+	wcNewMessage(1, giphyImg, giphyBig);
+});
+$("article img.giphy").click(function() {																	// Click GIPHY image in thread
+   $(".giphy-fs-container .giphy-fs-image img").attr("src",$(this).attr('og'));
+   $("#bottom-bar-photo").hide();
+   $(".giphy-fs-container").addClass("show");
+});
+$('#message-menu li').click(function() {																	// Message Menu Option
+    $('#message-menu').removeClass('show');
+	if ( $(this).attr('class') == "rename-group-btn" ) {
+		var statement = "<?php echo ossn_print('com:webchat:group:rename:p'); ?>";
+		statement = statement.replace("*",$('.contact-profile .groupinfo .groupname').html());
+		
+		<!-- statement = statement.toString().replace("*",$("#addChatMenu #groupName").val()); -->
+		cdPopup("<?php echo ossn_print('com:webchat:group:rename:legend'); ?>",
+				statement,
+				true,
+				"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+				"wcRenameGroup($('#cd-popup-input').val());",
+				true,
+				"<?php echo ossn_print('com:webchat:generic:cancel'); ?>",
+				"callback_cancel();",
+				"<?php echo ossn_print('com:webchat:group:rename:placeholder'); ?>");		
+	} else if ( $(this).attr('class') == "media-group-btn" ) {
+		$(".giphy-fs-container .giphy-fs-image img").attr("src",$('.contact-profile img').attr('src'));
+		$('.group-photos-container').clone(true,true).appendTo('.giphy-fs-container');
+		$(".giphy-fs-container").addClass("show");
+	    if (owner == <?php echo ossn_loggedin_user()->guid; ?>) {
+			$('#bottom-bar-photo').show();
+		} else {
+			$('#bottom-bar-photo').hide();
+		}
+	    if ($("#message-menu").hasClass("show")) $("#message-menu").removeClass("show");
+		wcGetGroupPhotos();	
+	} else if ( $(this).attr('class') == "mute-group-btn" ) {
+	
+	} else if ( $(this).attr('class') == "manage-group-btn" ) {
+		wcGetContacts(1);
+	} else if ( $(this).attr('class') == "view-group-btn" ) {
+		wcGetContacts(2);
+	} else if ( $(this).attr('class') == "delete-group-btn" ) {
+		
+	} else if ( $(this).attr('class') == "delegate-group-btn" ) {
+		wcGetContacts(3);
+	} else if ( $(this).attr('class') == "leave-group-btn" ) {
+		cdPopup("<?php echo ossn_print('com:webchat:generic:sure'); ?>",
+				"<?php echo ossn_print('com:webchat:group:leaveanddelete'); ?>",
+				true,
+				"<?php echo ossn_print('com:webchat:generic:ok'); ?>",
+				"callback_wcLeaveGroup(true);",
+				true,
+				"<?php echo ossn_print('com:webchat:generic:cancel'); ?>",
+				"callback_wcLeaveGroup(false);");	
 	}
 });
 
+///*****  HELPERS *****///
+function dismissFsContainer() {
+	$(".giphy-fs-container .giphy-fs-image img").attr('src','#');
+    $(".giphy-fs-container").removeClass("show");
+    //$(".giphy-fs-container .changephoto").removeClass("show");
+	//$('#group_image_button').hide();
+	$(".giphy-fs-container .group-photos-container").remove();
+	var d = $("div.messages");
+	d.scrollTop(d.prop("scrollHeight"));
+}
+function dismissAddChatMenu() {																				// Dismiss the form dialog
+	$('#addChatMenu').removeClass('show');
+}
+function natural_language_join(list, conjunction = 'and') {
+  last = list.pop();
+  if (list) {
+    return list.join(', ', list) + ' ' + conjunction + ' ' + last;
+  }
+  return last;
+}
+function cdPopup(legend, message, yesbutton, yestext, yescb, nobutton, notext, nocb, inputplaceholder = false) {
+	<!-- console.log ('legend:',legend); -->
+	<!-- console.log ('message:', message); -->
+	<!-- console.log ('yesbutton:',yesbutton); -->
+	<!-- console.log ('yestext:',yestext); -->
+	<!-- console.log ('yescb:',yescb); -->
+	<!-- console.log ('nobutton:',nobutton); -->
+	<!-- console.log ('notext:',notext); -->
+	<!-- console.log ('nocb:',nocb); -->
+	<!-- console.log ('inputplaceholder:', inputplaceholder); -->
+	if (inputplaceholder) {
+		$('#cd-popup-input').attr('placeholder',inputplaceholder);
+		$('#cd-popup-input').val('');
+		$('#cd-popup-input').show();
+	} else {
+		$('#cd-popup-input').hide();
+	}
+	$(".cd-popup legend").html(legend);
+	$(".cd-popup p").html(message);
+	if (yesbutton) {
+		$(".cd-popup .dialog-yes").text(yestext);
+		if (yescb) {
+			$(".cd-popup .dialog-yes").attr("onclick",yescb);
+		} else {
+			$(".cd-popup .dialog-yes").attr("onclick","");	
+		}
+		$(".cd-popup .dialog-yes").show();
+	} else {
+		$(".cd-popup .dialog-yes").hide();
+	}
+	if (nobutton) {
+		$(".cd-popup .dialog-no").text(notext);
+		if (nocb) {
+			$(".cd-popup .dialog-no").attr("onclick",nocb);
+		} else {
+			$(".cd-popup .dialog-no").attr("onclick","");	
+		}			
+		$(".cd-popup .dialog-no").show();
+	} else {
+		$(".cd-popup .dialog-no").hide();
+	}		
+	$(".cd-popup").addClass("show");
+	$(".cd-popup-fade").addClass("show"); 	
+}
+function intInArray (obj, value) {
+	var ret_bool = false;
+	$.each(obj, function(i,v) {
+		if (v === value) {
+			ret_bool = true;
+		};
+	});
+	return ret_bool;
+};
+function toggleFullScreen() {
+  if (!amIFullscreen()) {  // current working methods
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    } else if (document.documentElement.msRequestFullscreen) {
+      document.documentElement.msRequestFullscreen();
+    } else if (document.documentElement.mozRequestFullScreen) {
+      document.documentElement.mozRequestFullScreen();
+    } else if (document.documentElement.webkitRequestFullscreen) {
+      document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+}
+function amIFullscreen () {
+  if (!document.fullscreenElement &&
+      !document.mozFullScreenElement &&
+	  !document.webkitFullscreenElement &&
+	  !document.msFullscreenElement ) {
+		return false;
+	} else {
+		return true;
+	}
+}
+function isJSON (something) {
+    if (typeof something != 'string')
+        something = JSON.stringify(something);
+
+    try {
+        JSON.parse(something);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+function decodeEntities(encodedString) {
+  var textArea = document.createElement('textarea');
+  textArea.innerHTML = encodedString;
+  return textArea.value;
+}
 function sortUL(selector) {
 	$(selector).each(function(){
 		$(this).children('li').sort((a,b)=>a.innerText.localeCompare(b.innerText)).appendTo(this);
 	});
 }
+$("li.group-photo").click(function() {																		// Click group image from bottom bar
+   $(".giphy-fs-container .giphy-fs-image img").attr("src",$(this).attr('data-src'));
+});
+$(".giphy-fs-container .giphy-fs-dismiss i").click(function() {												// Click FULLSCREEN dismiss
+   dismissFsContainer();
+});
+$(".contact-profile img").click(function() {																// Click main chat image
+    $(".giphy-fs-container .giphy-fs-image img").attr("src",$(this).attr('src'));
+    $(".giphy-fs-container").addClass("show");
+    //$(".giphy-fs-container .changephoto").addClass("show");
+    //$('#group_image_button').show();
+   
+	$('.group-photos-container').clone(true,true).appendTo('.giphy-fs-container');
+
+	if (owner == <?php echo ossn_loggedin_user()->guid; ?>) {
+		$('#bottom-bar-photo').show();
+	} else {
+		$('#bottom-bar-photo').hide();
+	}
+	if ($("#message-menu").hasClass("show")) $("#message-menu").removeClass("show");
+	wcGetGroupPhotos();	
+});
+function delay(callback, ms) {																				// Typing in GIPHY
+  var timer = 0;
+  return function() {
+    var context = this, args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      callback.apply(context, args);
+    }, ms || 0);
+  };
+}
+$('.giphyPanel .giphy-input').keyup( delay ( function(){
+   	var xhr = $.get('<?php echo ( ossn_site_url("giphy"));?>?action=search&query=' + $(this).val());
+	xhr	.fail(function() {
+	location.reload();
+	})
+	.done(function(data) {
+		$('#giphySelector .results').html("");
+		var json_response = JSON.parse(decodeURIComponent(data));
+		var i;
+		for (i = 0; i < 25; i++) {
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.left'));
+		}
+		for (i = 25; i < 50; i++) {
+		  $(".clones .giphy-img").clone(true,true).append('<img data-og="' + json_response.data[i].images.original.url + '" src="' + json_response.data[i].images.fixed_width.url + '">').appendTo($('#giphySelector .results.right'));
+		}
+	});
+}, 500));
+function filename(path){
+    path = path.substring(path.lastIndexOf("/")+ 1);
+    return (path.match(/[^.]+(\.[^?#]+)?/) || [])[0];
+}
+function containsEmojis(input, includeBasic) {
+
+    if (typeof includeBasic == "undefined")
+        includeBasic = true;
+
+    for (var c of input) {
+        var cHex = ("" + c).codePointAt(0).toString(16);
+        var lHex = cHex.length;
+        if (lHex > 3) {
+
+            var prefix = cHex.substring(0, 2);
+
+            if (lHex == 5 && prefix == "1f") {
+                return true;
+            }
+
+            if (includeBasic && lHex == 4) {
+                if (["20", "21", "23", "24", "25", "26", "27", "2B", "29", "30", "32"].indexOf(prefix) > -1)
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 </script>

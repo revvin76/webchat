@@ -20,18 +20,19 @@ if (isset($params['contents'])) {
 } else {
     $contents = '';
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $sitelanguage; ?>">
 <head>
     <title><?php echo $title; ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="manifest" href="<?php echo ossn_site_url('components/webchat/webchat.manifest');?>">
+	<!--<link rel="manifest" href="<?php //echo ossn_site_url('components/webchat/webchat.manifest');?>">-->
 	<meta name="theme-color" content="#333">
     <link rel="icon" href="<?php echo ossn_add_cache_to_url(ossn_theme_url('images/favicon.ico'));?>" type="image/x-icon" />
 	<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
 	<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
-	<link rel="stylesheet" href="<?php echo ossn_site_url('components/webchat/plugins/default/css/custom.css');?>" type='text/css'>
+	<link rel="stylesheet" href="<?php echo ossn_site_url('components/webchat/plugins/default/css/custom.css')."?".microtime();?>" type='text/css'>
 	<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
 	<script src="https://use.typekit.net/hoy3lrg.js"></script>
 	<script>try{Typekit.load({ async: true });}catch(e){}</script>	
