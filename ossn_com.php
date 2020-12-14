@@ -14,7 +14,11 @@ function com_webchat_extend_private_network($hook, $type, $allowed_pages, $param
 }
 //this section initilises webchat
 function web_chat() {
-	ossn_register_callback('login', 'success', 'redirect_login');
+	$component = new OssnComponents;
+	$settings = $component->getComSettings('webchat');	
+	if ($settings->redirecttowc){
+		ossn_register_callback('login', 'success', 'redirect_login');
+	}
 	ossn_add_hook('services', 'methods', 'unread_mesages_count_api_custom');
 	ossn_extend_view('css/ossn.default', 'css/main');
 	ossn_add_hook('private:network', 'allowed:pages', 'com_webchat_extend_private_network');
@@ -22,9 +26,6 @@ function web_chat() {
 	ossn_register_page('giphy', 'giphy_test');
 		
     if(ossn_isLoggedin()) {
-		$component = new OssnComponents;
-		$settings = $component->getComSettings('webchat');
-				
 		// Register the admin dashboard for administrators		
 		if(ossn_isAdminLoggedin()) {
 			ossn_register_action('webchat/admin/settings', __WEB_CHAT__ . 'actions/webchat/admin/settings.php');
@@ -34,14 +35,16 @@ function web_chat() {
 
 		ossn_register_page('chat_api', 'chat_api');
 		$icon          = ossn_site_url('components/OssnMessages/images/messages.png');
-		ossn_register_sections_menu('newsfeed', array(
-				'name' => 'webchat',
-				'text' => ossn_print('com:webchat:menu'),
-				'url' => ossn_site_url('webchat'),
-				'section' => 'personal',
-				'parent' => 'links',
-				'icon' => $icon
-		));
+		if ($settings->addlink) {
+			ossn_register_sections_menu('newsfeed', array(
+					'name' => 'webchat',
+					'text' => ossn_print('com:webchat:menu'),
+					'url' => ossn_site_url('webchat'),
+					'section' => 'personal',
+					'parent' => 'links',
+					'icon' => $icon
+			));
+		}
 	} else {
 
 	}
@@ -82,23 +85,7 @@ function redirect_login($callback, $type, $params) {
 	}
 }
 
-// function webchat_enabled($hook, $type, $allowed_pages, $params) {
-	// echo "<script>console.log('enabled');</script>";
-// }
-// function webchat_disabled($hook, $type, $allowed_pages, $params) {
-	// echo "<script>console.log('disabled');</script>";
-// }
-// function webchat_installed($hook, $type, $allowed_pages, $params) {
-	// echo "<script>console.log('installed');</script>";
-// }
-// function webchat_deleted($hook, $type, $allowed_pages, $params) {
-	// echo "<script>console.log('deleted');</script>";
-// }
-
 ossn_register_callback('ossn', 'init', 'intercept_giphy');
 ossn_register_callback('ossn', 'init', 'web_chat');
-
-// ossn_add_hook('component', 'enabled', 'webchat_enabled');
 ossn_add_hook('component', 'installed', 'webchat_installed');
-// ossn_add_hook('component', 'disabled', 'webchat_disabled');
-// ossn_add_hook('component', 'deleted', 'webchat_deleted');
+

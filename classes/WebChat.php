@@ -20,55 +20,6 @@ class WebChat extends OssnEntities {
 				/// ADD CODE HERE TO CREATE TABLES IF THEY DONT ALREADY EXIST
 		}
 
-		/* 	NEW TABLES
-
-			CREATE TABLE WebChat_groups (
-			id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-			name VARCHAR(60) DEFAULT NULL,
-			owner INT(6) UNSIGNED NOT NULL,
-			deleted INT(6) UNSIGNED DEFAULT 0,
-			photo VARCHAR(60) DEFAULT NULL
-			);
-
-			CREATE TABLE WebChat_thumbnails (
-			id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-			owner INT(6) UNSIGNED NOT NULL,
-			groupid INT(6) DEFAULT NULL,
-			photo VARCHAR(999) DEFAULT NULL
-			);
-			
-			CREATE TABLE WebChat_groupsphotos (
-			id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-			groupid INT(6) UNSIGNED NOT NULL,
-			filename VARCHAR(60) UNSIGNED NOT NULL
-			);
-			
-			CREATE TABLE WebChat_groupmembers (
-			id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-			groupid INT(6) UNSIGNED NOT NULL,
-			userid INT(6) UNSIGNED NOT NULL
-			);
-
-			CREATE TABLE WebChat_messages (
-			id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-			groupid INT(6) UNSIGNED NOT NULL,
-			message_from INT(6) UNSIGNED NOT NULL,
-			message VARCHAR(999) NOT NULL,
-			preview VARCHAR(999) DEFAULT NULL,
-			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			deleted TIMESTAMP DEFAULT NULL
-			);
-
-			CREATE TABLE WebChat_messagedata (
-			id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-			userid INT(6) UNSIGNED NOT NULL,
-			groupid INT(6) UNSIGNED NOT NULL,
-			messageid INT(6) UNSIGNED NOT NULL,
-			delivered INT(6) UNSIGNED DEFAULT 0,
-			viewed INT(6) UNSIGNED DEFAULT 0,
-			deleted INT(6) UNSIGNED DEFAULT 0
-			);
-*/
 		/*	NEW FUNCTIONS */
 		/**
 		 * Gets user ids of everyone in the same groups as the owner
@@ -115,9 +66,48 @@ class WebChat extends OssnEntities {
 		public function getGroupPhotos($groupid) {
 			if(empty($groupid)) {
 				return false;
-			}			
-			$params['from']   = 'WebChat_groupsphotos';
+			}	
+			$params['params'] = array('gp.*, g.owner as owner');
+			$params['from']   = 'WebChat_groupsphotos as gp';
 			$params['wheres'] = array("groupid = '{$groupid}'");
+			$params['joins'][] = 'INNER JOIN WebChat_groups as g on gp.groupid = g.id';
+			return $this->select($params, true);
+		}
+		/**
+		 * Gets group images from the message thread
+		 *
+		 * @params  integer  $groupid   Guid of group
+		 *
+		 * @return object|false
+		*/		
+		public function getGroupImages($groupid) {
+			if(empty($groupid)) {
+				echo "Empty group id";
+				return false;
+			}			
+			$params['params']   = array('groupid, message_from as owner, message as image, id as messageid');
+			$params['from']   = 'WebChat_messages';
+			$imageid = "{&quot;img%";
+			$giphyid = "%giphy%";
+			$params['wheres'] = array("groupid = '{$groupid}' AND message LIKE '{$imageid}' AND message NOT LIKE '{$giphyid}'");
+			return $this->select($params, true);
+		}
+		/**
+		 * Gets group previews from the message thread
+		 *
+		 * @params  integer  $groupid   Guid of group
+		 *
+		 * @return object|false
+		*/		
+		public function getGroupPreviews($groupid) {
+			if(empty($groupid)) {
+				return false;
+			}			
+			$params['params']   = array('groupid, message_from as owner, message as image, id as messageid, preview');
+			$params['from']   = 'WebChat_messages';
+			$imageid = "{&quot;img%";
+			$giphyid = "%giphy%";
+			$params['wheres'] = array("groupid = '{$groupid}' AND preview IS NOT NULL");
 			return $this->select($params, true);
 		}
 		/**
@@ -154,7 +144,7 @@ class WebChat extends OssnEntities {
 			if(empty($owner)) {
 				return false;
 			}
-			$params['params'] = array('g.id as groupid, g.owner as owner, g.name, g.photo, (SELECT time FROM `WebChat_messages` WHERE groupid=g.id AND deleted IS NULL ORDER BY time DESC LIMIT 1) as time, (SELECT message_from FROM `WebChat_messages` WHERE groupid=g.id AND deleted IS NULL ORDER BY time DESC LIMIT 1) as message_from, (SELECT message FROM `WebChat_messages` WHERE groupid=g.id AND deleted IS NULL ORDER BY time DESC LIMIT 1) as preview');
+			$params['params'] = array('g.id as groupid, g.owner as owner, g.name, g.photo, (SELECT id FROM `WebChat_messages` WHERE groupid=g.id AND deleted IS NULL ORDER BY time DESC LIMIT 1) as messageid, (SELECT time FROM `WebChat_messages` WHERE groupid=g.id AND deleted IS NULL ORDER BY time DESC LIMIT 1) as time, (SELECT message_from FROM `WebChat_messages` WHERE groupid=g.id AND deleted IS NULL ORDER BY time DESC LIMIT 1) as message_from, (SELECT message FROM `WebChat_messages` WHERE groupid=g.id AND deleted IS NULL ORDER BY time DESC LIMIT 1) as preview');
 			$params['from']   = 'WebChat_groups as g';
 			$params['wheres'] = array(
 					"gm.userid = '{$owner}'"
@@ -372,7 +362,7 @@ class WebChat extends OssnEntities {
 		 *
 		 * @return boolean
 		*/
-		public function sendMessage($group, $userid, $message, $preview = false) {
+		public function sendMessage($group, $userid, $message, $preview = false, $type = 0) {
 			if(empty($message) || (empty($userid) && $userid <> 0) || empty($group)) {
 				return "Empty parameter(s) parsed";
 			}
@@ -391,11 +381,11 @@ class WebChat extends OssnEntities {
 			$params['into']   = 'WebChat_messages';
 			
 			if ($preview) {
-				$params['names']  = array('groupid', 'message_from', 'message', 'preview');
-				$params['values'] = array($group, $userid, $message, json_encode($preview));
+				$params['names']  = array('groupid', 'message_from', 'message', 'preview', 'type');
+				$params['values'] = array($group, $userid, $message, json_encode($preview), $type);
 			} else {
-				$params['names']  = array('groupid', 'message_from', 'message');
-				$params['values'] = array($group, $userid, $message);
+				$params['names']  = array('groupid', 'message_from', 'message', 'type');
+				$params['values'] = array($group, $userid, $message, $type);
 			}
 
 			if($this->insert($params)) {		
@@ -416,8 +406,13 @@ class WebChat extends OssnEntities {
 					foreach ($member_ids as $member) {
 						$params=[];
 						$params['into']   = 'WebChat_messagedata';
-						$params['names']  = array('groupid', 'userid', 'messageid');
-						$params['values'] = array($group, $member->userid, $message_id);
+						if ($member->userid == $userid) {
+							$params['names']  = array('groupid', 'userid', 'messageid', 'delivered', 'viewed');
+							$params['values'] = array($group, $member->userid, $message_id, 1, 1);
+						} else {
+							$params['names']  = array('groupid', 'userid', 'messageid');
+							$params['values'] = array($group, $member->userid, $message_id);
+						}
 						if(!$this->insert($params)) return false;
 					}
 				}
@@ -475,14 +470,67 @@ class WebChat extends OssnEntities {
 			if(empty($userid) || empty($group)) {
 				return false;
 			}
-			//$params['params']= array('msg.id, msg.message_from, msg.message, msg.time');
-			$params['from']   = 'WebChat_messagedata as msgdt';
-			
+			$params['from']   = 'WebChat_messagedata as msgdt';			
 			$params['wheres'] = array(
 					"msgdt.userid = '{$userid}' AND msgdt.groupid = '{$group}' AND msgdt.deleted=0 AND msg.deleted IS NULL"
 			);
 			$params['joins'][] = 'INNER JOIN WebChat_messages as msg ON msg.id = msgdt.messageid';
 			$params['order_by'] = 'time ASC';
+			if ($messages = $this->select($params, true)){
+				$messagesArr = json_decode(json_encode($messages),true);
+				
+				$params=[];
+				$params['table']  = 'WebChat_messagedata';
+				$params['names']  = array('viewed', 'delivered');
+				$params['values'] = array(1 , 1);
+				foreach ($messagesArr as $message) {
+					$params['wheres'] = array("userid='{$userid}' AND groupid='{$group}' AND messageid='{$message['messageid']}'");
+					if(!$this->update($params)) {
+						return false;
+					}
+				}
+				return $messages;
+			}
+			return false;
+		}
+		/*
+		 * Get message group status. Returns delivered/read status for a mesage
+		 *
+		 * @params  integer		$group		ID of group
+		 * @params  integer		$userid		Guid of user requesting data
+		 * @params  integer		$msgid		ID of message
+		 *
+		 * @return object
+		*/
+		public function getMsgGroupStatus ($group, $userid, $msgid) {
+			if(empty($userid) || empty($group)) {
+				return false;
+			}
+			$params['params'] = array ('msgdt.messageid, COUNT(IF(msgdt.delivered = 0, 1, NULL)) \'Undelivered\',  COUNT(IF(msgdt.delivered = 1, 1, NULL)) \'Delivered\', COUNT(IF(msgdt.viewed = 0, 1, NULL)) \'Unread\', COUNT(IF(msgdt.viewed = 1, 1, NULL)) \'Read\'');
+			$params['from']   = 'WebChat_messagedata as msgdt';			
+			$params['wheres'] = array(
+					"msgdt.groupid = '{$group}' AND msgdt.deleted=0 AND msgdt.messageid = '{$msgid}'"
+			);
+			return $this->select($params, true);
+		}
+		/*
+		 * Get message status for use. Returns delivered/read status for a mesage
+		 *
+		 * @params  integer		$group		ID of group
+		 * @params  integer		$userid		Guid of user requesting data
+		 * @params  integer		$msgid		ID of message
+		 *
+		 * @return object
+		*/
+		public function getMsgStatus ($group, $userid, $msgid) {
+			if(empty($userid) || empty($group) || empty($msgid)) {
+				return false;
+			}
+			$params['params'] = array ('msgdt.messageid, msgdt.delivered');
+			$params['from']   = 'WebChat_messagedata as msgdt';			
+			$params['wheres'] = array(
+					"msgdt.userid= '{$userid}' AND msgdt.groupid = '{$group}' AND msgdt.deleted=0 AND msgdt.messageid = '{$msgid}'"
+			);
 			return $this->select($params, true);
 		}
 		
@@ -511,14 +559,31 @@ class WebChat extends OssnEntities {
 			if(empty($userid) || empty($group)) {
 				return false;
 			}
-			$params['table']  = 'WebChat_groups';
-			$params['names']  = array('deleted');
-			$params['values'] = array(time());
-			$params['wheres'] = array("id='{$group}' AND owner='{$userid}'");
-			if($this->update($params)) {
-					return true;
-			}
-			return false;
+			$params           = array();
+			$params['from']   = 'WebChat_messages';
+			$params['wheres'] = array("groupid='{$group}'");
+			$this->delete($params);
+			
+			$params           = array();
+			$params['from']   = 'WebChat_messagedata';
+			$params['wheres'] = array("groupid='{$group}'");
+			$this->delete($params);			
+			
+			$params           = array();
+			$params['from']   = 'WebChat_groupsphotos';
+			$params['wheres'] = array("groupid='{$group}'");
+			$this->delete($params);			
+			
+			$params           = array();
+			$params['from']   = 'WebChat_groups';
+			$params['wheres'] = array("id='{$group}'");
+			$this->delete($params);			
+			
+			$params           = array();
+			$params['from']   = 'WebChat_groupmembers';
+			$params['wheres'] = array("groupid='{$group}'");
+			$this->delete($params);			
+			return true;
 		}		
 
 		/**
@@ -526,17 +591,18 @@ class WebChat extends OssnEntities {
 		 *
 		 * @params  integer		$group		ID of group
 		 * @params  integer		$userid		Guid of user triggering function
+		 * @params  integer		$msgid		ID of the message		 
 		 *
 		 * @return boolean
 		*/		
-		public function markDelivered($group, $userid) {
-			if(empty($userid) || empty($group)) {
+		public function markDelivered($group, $msgid, $userid) {
+			if(empty($userid) || empty($group) || empty($msgid)) {
 				return false;
 			}
 			$params['table']  = 'WebChat_messagedata';
 			$params['names']  = array('delivered');
 			$params['values'] = array(1);
-			$params['wheres'] = array("userid='{$userid}' AND groupid='{$group}'");
+			$params['wheres'] = array("userid='{$userid}' AND groupid='{$group}' AND messageid='{$msgid}'");
 			if($this->update($params)) {
 				return true;
 			}
@@ -547,17 +613,18 @@ class WebChat extends OssnEntities {
 		 *
 		 * @params  integer		$group		ID of group
 		 * @params  integer		$userid		Guid of user triggering function
+		 * @params  integer		$msgid		ID of the message
 		 *
 		 * @return boolean
 		*/		
-		public function markRead($group, $userid) {
-			if(empty($userid) || empty($group)) {
+		public function markRead($group, $msgid, $userid) {
+			if(empty($userid) || empty($group) || empty($msgid)) {
 				return false;
 			}
 			$params['table']  = 'WebChat_messagedata';
 			$params['names']  = array('viewed');
 			$params['values'] = array(1);
-			$params['wheres'] = array("userid='{$userid}' AND groupid='{$group}'");
+			$params['wheres'] = array("userid='{$userid}' AND groupid='{$group}' AND messageid='{$msgid}'");
 			if($this->update($params)) {
 				return true;
 			}
@@ -577,13 +644,52 @@ class WebChat extends OssnEntities {
 			if(empty($messageid) || empty($userid) || empty($group)) {
 				return false;
 			}
-			$params['table']  = 'WebChat_messages';
-			$params['names']  = array('deleted');
-			$params['values']  = array(now());
-			$params['wheres'] = array("id='{$messageid}' AND message_from='{$userid}' AND groupid='{$group}'");
-			if($this->update($params)) {
-					return true;
-			}
+			
+			$params           = array();
+			$params['from']   = 'WebChat_messages';
+			$params['wheres'] = array("groupid='{$group}' AND id='{$messageid}' AND message_from='{$userid}'");
+			if (!$this->delete($params)) return true;
+			
+				
+			$params           = array();
+			$params['from']   = 'WebChat_messagedata';
+			$params['wheres'] = array("groupid='{$group}' AND messageid='{$messageid}'");
+			if (!$this->delete($params)) return true;
+			
+			
 			return false;
 		} 
+		/**
+		 * Checks whether user has been welcomed
+		 *
+		 * @params  integer  $userid   id of user to check
+		 *
+		 * @return object|false
+		*/
+		public function welcome($userid) {
+			if(empty($userid)) {
+				return false;
+			}
+			$params['from']   = 'ossn_entities';
+			$params['wheres'] = array("owner_guid = '{$userid}' AND type = 'wcWelcome'");
+			return $this->select($params, true);
+		}
+		/**
+		 * Marks the user as welcomed
+		 *
+		 * @params  integer  $userid   id of user to check
+		 *
+		 * @return object|false
+		*/
+		public function welcomed($userid) {
+			if(empty($userid)) {
+				return false;
+			}
+			$params['into']   = 'ossn_entities';
+			$params['names']  = array('owner_guid', 'type', 'subtype', 'time_created', 'time_updated', 'permission', 'active');
+			$params['values'] = array($userid, 'wcWelcome', 'done', 0, 0, 2, 1);
+			
+			$this->insert($params);
+			return;			
+		}
 } //class

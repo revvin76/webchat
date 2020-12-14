@@ -15,7 +15,7 @@ $en = array(
     'com:webchat:menu:viewsite' => 'Launch Web Chat',
     'com:webchat:homebutton' => 'Home',
     'com:webchat:input:placeholder' => 'Type a message',
-    'com:webchat:menu:settings' => 'Settings',
+    'com:webchat:menu:settings' => 'Admin Dashboard',
     'com:webchat:menu:fullscreen' => 'Fullscreen',
     'com:webchat:menu:logout' => 'Log out',
     'com:webchat:menu:addchat' => 'New Chat',
@@ -34,6 +34,7 @@ $en = array(
 	'com:webchat:group:nomembers' => 'You must choose at least one person to chat with.',
 	'com:webchat:group:noselection' => 'You must choose at least 1 person to add or remove from the group.',
 	'com:webchat:group:leaveanddelete' => 'When you leave the chat, all your messages will be deleted.',
+	'com:webchat:group:deletegroup' => 'This will delete all messages and associated images.',
 	'com:webchat:group:removeanddelete' => 'When you remove a member, all their messages will be deleted.',
 	'com:webchat:group:leavegroup:success' => 'Chat left and all messages have been deleted.',
 	'com:webchat:group:leavegroup:info' => ' left the chat.',
@@ -42,6 +43,7 @@ $en = array(
 	'com:webchat:group:rename:placeholder' => 'Subject (optional)',
 	'com:webchat:group:rename:info' => ' changed the group name.',
 	'com:webchat:group:permissions' => 'You do not have permissions to perform that action.',
+	'com:webchat:group:added' => 'You have been added to a new chat group.',
 	
 	'com:webchat:group:deletephoto' => 'Are you sure you want to delete this photo?',
 	
@@ -60,7 +62,6 @@ $en = array(
 	'com:webchat:generic:sure' => 'Are you sure?',
 	
 	'com:webchat:admin:title' => 'General',
-	'com:webchat:admin:subtitle' => 'Use these screens to customise your WebChat experience.',
 	'com:webchat:admin:pwa' => 'PWA Manifest',
 	'com:webchat:admin:pwa:isolation' => 'Home Button',
 	'com:webchat:admin:pwa:isolation:homebutton' => 'Enable home button?',
@@ -95,10 +96,17 @@ $en = array(
 	'com:webchat:admin:privatenetwork:label' => 'Apply fix to Private Network exclusions',
 	'com:webchat:admin:true' => 'Yes',
 	'com:webchat:admin:false' => 'No',
+	'com:webchat:admin:apitab' => 'API Keys',
 	'com:webchat:admin:giphy' => 'GIPHY Integration',
 	'com:webchat:admin:giphy:api' => 'API Key',
 	'com:webchat:admin:giphy:save' => 'Save',
-	
+	'com:webchat:admin:pusher'				=> 'Pusher App Key',
+	'com:webchat:admin:pusher:app_id'		=> 'App ID',
+	'com:webchat:admin:pusher:key'			=> 'Key',
+	'com:webchat:admin:pusher:secret'		=> 'Secret',
+	'com:webchat:admin:pusher:cluster'		=> 'Cluster',
+	'com:webchat:admin:redirecttowc'		=> 'Redirect to WebChat once logged on successfully',
+	'com:webchat:admin:addlink'				=> 'Add link to WebChat on the main menu',
 	
 	'com:webchat:enabling_service_worker_failure' => 'Service worker enabling failure',
 	'com:webchat:manifest_file_missing' => 'This component cannot be enabled without favicons installed - please run <b>Configure->Favicons</b> first',

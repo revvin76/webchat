@@ -1,17 +1,7 @@
 <?php
-$apiKey = ossn_services_apikey();
-$siteURL = ossn_site_url('api/v1.0/');
-$addURL = $siteURL."message_add?";
-$listURL = $siteURL."message_list?";
-$userURL = $siteURL."user_details?";
-$notifsURL = $siteURL."notifications_count?";
-$notifcountURL = $siteURL."unread_mesages_count_custom?";
-$recentURL = $siteURL."message_recent?";
-
 $component = new OssnComponents;
 $WebChat  = new WebChat;
 $WebChatSettings  = $component->getSettings("webchat");
-//******************************************************************************//
 
 // Validate given token to ensure its valid. Redirect to webchat home if not, where you'll automatically redirect to login if required.
 $ossnts = input('ossn_ts');
@@ -24,25 +14,50 @@ if ($ossntoken != $generate) {
 	header("Location: " . ossn_site_url('webchat'));
 }
 
+//** LOAD THE PUSHER LIBRARIES **//
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/Psr/Log/LoggerAwareInterface.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/Psr/Log/LoggerAwareTrait.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/Psr/Log/LoggerInterface.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/Psr/Log/LogLevel.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/pusher/Pusher.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/pusher/PusherCrypto.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/pusher/PusherException.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/pusher/PusherInstance.php';
+require ossn_route()->www . 'components/webchat/plugins/default/webchat/pusher/Webhook.php';
+// Initialise Pusher
+$options = array(
+	'cluster' => 'eu',
+	'useTLS' => true
+);
+$pusher = new Pusher\Pusher(
+	$WebChatSettings->pusher_key,
+	$WebChatSettings->pusher_secret,
+	$WebChatSettings->pusher_app_id,
+	$options
+);
 
-function CallAPI ($url,$post) {
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $url);
-	curl_setopt($ch, CURLOPT_POST, 1);
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	$result = curl_exec($ch);
-	curl_close($ch);
-	return json_decode($result);
-}
+  // $data['message'] = array('message' => 'test message', 'debug' => 'debug stuff');
+  // $pusher->trigger('my-channel', 'my-event', $data);
+
+
 function elapsed_time($timestamp, $precision = 1) {
   $time = time() - strtotime($timestamp);
+  
+  // First check if this was today
+	$dt = date_create_from_format('U', strtotime($timestamp));
+	if ($dt) {
+		$dt->setTime(0, 0); // set time to 00:00
+		$now = new DateTime('now', new DateTimeZone('UTC')); // time now, but in UTC 
+		$now->setTime(0, 0); // set time to 00:00
+		$diff = $dt->diff($now);
+	}
+    
   $a = array('decade' => 315576000, 'year' => 31557600, 'month' => 2629800, 'week' => 604800, 'day' => 86400, 'hour' => 3600, 'min' => 60, 'sec' => 1);
   $i = 0;
-  if ($time < 86400) {
-	  $date = date_create($timestamp);
-	  return date_format($date, 'H:i');
-  }
+  // if ($time < 86400) {
+	  // $date = date_create($timestamp);
+	  // return date_format($date, 'H:i');
+  // }
   foreach($a as $k => $v) {
     $$k = floor($time/$v);
     if ($$k) $i++;
@@ -51,252 +66,156 @@ function elapsed_time($timestamp, $precision = 1) {
     $$k = $$k ? $$k.' '.$k.$s.' ' : '';
     @$result .= $$k;
   }
-  return $result ? $result.'ago' : '1 sec to go';
+ if ($dt) {
+  	switch ($diff->days) {
+		case 0: 
+			$date = date_create($timestamp);
+			return date_format($date, 'H:i');
+		case 1: 
+			$date = date_create($timestamp);
+			return 'Yesterday ' . date_format($date, 'H:i');
+		default: 
+			return $result ? $result.'ago' : '1 sec to go';
+	}
+ }
+ return $result ? $result.'ago' : '1 sec to go';
 }
-function checkStatus($guidToCheck) {
-	$friends = ossn_loggedin_user()->getFriends();
-	if(!$friends) {
-			return false;
-	}
-	foreach($friends as $friend) {
-			$status = 0;
-			if(($friend instanceof OssnUser) && $friend->guid == $guidToCheck) {
-				return $friend->isOnline(10)==1?"online":"busy";
-			}
-	}
-	return false;
-}	
-function returnFriendStatuses() {
-	$friends = ossn_loggedin_user()->getFriends();
-	if(!$friends) {
-			return false;
-	}
-	$friendStatuses = [];
-	foreach($friends as $friend) {
-		if($friend instanceof OssnUser) {
-			$friendStatuses[$friend->guid] =  $friend->isOnline(10);
-		}
-	}
-	return json_encode($friendStatuses);
-}
+if ((input('action') !== null) && (input('action') == 'welcome')) {
 
+	if (!$response=$WebChat->welcome(ossn_loggedin_user()->guid)) {
+		error_log ($response);
+		$WebChat->welcomed(ossn_loggedin_user()->guid);
+		echo setReturnArray ("Success", "Welcome message on first visit" );
+		return;
+	}
+	echo setReturnArray ("Fail", "Already seen" );
+	return;
+}	
 if ((input('action') !== null) && (input('action') == 'getuser')) {
 	$userPARAM = array( 'api_key_token' => $apiKey , 'guid' => input('guid'));
 	$userDetails = CallAPI ($userURL , $userPARAM);
 	echo json_encode($userDetails);
 	exit;
-}
+}													
+if ((input('action') !== null) && (input('action') == 'msgStatus')) {
 
-
-if ((input('action') !== null) && (input('action') == 'messages')) {
-  	$with = filter_var(input('to'), FILTER_SANITIZE_NUMBER_INT);
-	$user2 = ossn_user_by_guid($with);
- 	
-	$listPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid , 'to' => $user2->guid, 'markallread' => 1);
-	if (input('offset')) $listPARAM['offset'] = input('offset'); 
-	$listMessages = CallAPI ($listURL , $listPARAM); 
-
-				if ($listMessages->payload->count > 0) {
-					$maxPages = ceil($listMessages->payload->count / 10);
-					if ($maxPages > 1) {
-						// echo '<span id="loadMore" data-page="1"> ^^^ load more ^^^</span>';
-					}
-					$returnArray = array();
-					$returnArray['maxpages'] = $maxPages;
-					$returnArray['page'] = $listMessages->payload->offset;
-					$returnArray['user1icon'] = ossn_loggedin_user()->iconURL()->small;
-					$returnArray['user2icon'] = $user2->iconURL()->smaller;
-					$returnArray['user2name'] = $user2->first_name;
-					$returnArray['messages'] = array();
-					$returnMessages = array();
-					
-					foreach($listMessages->payload->list as $message)
-					{
-						$returnRecord = array();		
-						$returnRecord['id'] = json_decode($message->id);
-						$returnRecord['elapsed'] = elapsed_time($message->time);
-						
-						// GIPHY
-						$json = json_decode(html_entity_decode($message->message),true);
-
-						// Lets check if its a single emoji, and if so make it bigger
-						$lgemoji = "";
-						// Check the message contains a single unicode character
-						if ((strlen(html_entity_decode($message->message)) == 4) && (strlen($message->message) != strlen(html_entity_decode($message->message)))) {
-							$lgemoji = "lg-emoji";														
-						}
-						$returnRecord['lgemoji']=$lgemoji;
-						
-						// Check whether the most recent message to contact has been viewed
-						if ($message->viewed == 0) {
-							$tick='<i class="fa fa-circle sent-unread" aria-hidden="true"></i>';
-						} else {
-							$tick='<i class="fa fa-circle sent-read" aria-hidden="true"></i>';
-						}
-						$returnRecord['viewed']=$message->viewed;
-						
-						if ($json['img']) {
-							$returnRecord['json']="true";
-							$returnRecord['giphyOriginal'] = $json["bigImg"];
-							$returnRecord['giphyPreview'] = $json["img"];
-							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-								$returnRecord['direction'] = "sent";
-							} else {
-								$returnRecord['direction'] = "replies";
-							}
-						} else {
-							$returnRecord['json']="false";
-							$returnRecord['message'] = $message->message;
-							if ($message->message_from->guid == ossn_loggedin_user()->guid) {
-								$returnRecord['direction'] = "sent";
-							} else {
-								$returnRecord['direction'] = "replies";
-							}
-						}
-						$returnMessages[]=$returnRecord;
-					};
-					$returnArray['messages'] = $returnMessages;
-				}
-
-		echo json_encode($returnArray);
-		exit;
-}
-
-if ((input('action') !== null) && (input('action') == 'recent')) {
-	$recentPARAM = array( 'api_key_token' => $apiKey , 'guid' => ossn_loggedin_user()->guid );
-	$recentMessages = CallAPI ($recentURL , $recentPARAM);
-	
-	$recentMessages = addFriends($recentMessages);
- 	if ($recentMessages->payload->count > 0) {
-		$i = -1;	
-		foreach($recentMessages->payload->list as $messageThread) {
-			$i++;
-			if ( $messageThread->message_to->guid == ossn_loggedin_user()->guid ) {
-				$withguid = $messageThread->message_from->guid;
-			} else {
-				$withguid = $messageThread->message_to->guid;		
-			}
-			if ($withguid){
-				$recentMessages->payload->list[$i]->status = checkStatus($withguid)?checkStatus($withguid):'offline';
-				$recentMessages->payload->list[$i]->elapsed = elapsed_time($messageThread->time);
-			}
-		}
-	} 
-	echo json_encode($recentMessages);
-}
-
-if ((input('action') !== null) && (input('action') == 'notifs')) {
-    $guid = filter_var(input('guid'), FILTER_SANITIZE_NUMBER_INT);	
-	
-    /* Get the live notification counts */
-	$notifcountPARAM = array( 'api_key_token' => $apiKey , 'guid' => $guid);
-	$notifcount = CallAPI ($notifcountURL , $notifcountPARAM);
-	
-	$notifs = json_decode(htmlspecialchars_decode(input('notifs')));
-
-	
-	// Check whether the stored notifications count match the live notifications count
-	if ( $notifcount->payload === $notifs->payload || $notifcount->payload === false) {
-		// We'll return false, as there is no need to perform any further actions when the live count hasn't changed
-		$response = [ 
-		'success' => false,
-		'statuses' => returnFriendStatuses(),
-		'message' => 'Failed'  // send "failed" if there are no unread messages
-		];
-		echo json_encode($response);
+	if (empty(input('groupid')) || empty(input('msgid')) || empty(input('msgaction'))) {
+		echo setReturnArray ("Failed", "Empty parameters");
 		return false;
-	} else {
-		// We know there has been a change, we just need to determine if it was from the user currently chatting
-		$current_chat = false;
-		$current_guid = intval(input('currentuser'));
-		
-		// If current_guid = -1, then we havent selected a chat to view yet, so we skip the below loops
-		if ($current_guid !== -1) {
-			$current_chat = true;
-		}
-		$response = [ 
-		'success' => true,
-		'current_chat' => $current_chat,
-		'payload' => $notifcount,
-		'message' => 'Success',
-		'statuses' => returnFriendStatuses()
-		];
-		echo json_encode($response);
-		return true;
 	}
-
-}
-
-function addFriends ($recentMessages) {
-		$friends = ossn_loggedin_user()->getFriends();
-	if(!$friends) {
-			return false;
-	}
+	$groupid = input('groupid');
+	$msgid = input('msgid');
+	$msgaction = input('msgaction');
 	
-	$guids = array();
-	foreach ($recentMessages->payload->list as $data) {
-		if (!in_array($data->message_from->guid, $guids)) $guids[] = intval($data->message_from->guid,10);
-		if (!in_array($data->message_to->guid, $guids)) $guids[] = intval($data->message_to->guid,10);
+	switch ($msgaction) {
+		case 1:
+			if (!$WebChat->markDelivered($groupid, $msgid, ossn_loggedin_user()->guid)) return false;
+			$data['message'] = array("groupid" => $groupid, "msgid" => $msgid, "delivered" => true);
+			break;
+		case 2:
+			if (!$WebChat->markRead($groupid, $msgid, ossn_loggedin_user()->guid)) return false;
+			$data['message'] = array("groupid" => $groupid, "msgid" => $msgid, "read" => true);
+			break;
 	}
 
-	foreach($friends as $friend) {
-		if($friend instanceof OssnUser) {
-			if (!in_array($friend->guid,$guids)) {
-				$recentMessages->payload->list[] = 
-								array ("message_from" => array ( "guid" => $friend->guid,
-														 "fullname" => $friend->fullname,
-														 "username" => $friend->username,
-														 "icon" => array ( "small" => $friend->iconURL()->small )
-														),
-								"message_to" => array ( "guid" => $friend->guid,
-														 "fullname" => $friend->fullname,
-														 "username" => $friend->username,
-														 "icon" => array ( "small" => $friend->iconURL()->small )
-														),
-								"message" => "",
-								"viewed" => "",
-								"time" => "",
-								"status" => "",
-								"payload" => "",
-								"elapsed" => "" );
-			}
-		}
-		
-	}								
-	return ($recentMessages);
-}
-
-/// Useful function below just for debugging. Console.log the returned data to see whats happening.
-if ((input('action') !== null) && (input('action') == 'compare')) {
-		$friends = ossn_loggedin_user()->getFriends();
-	if(!$friends) {
-			return false;
-	}
-	
-	$guids = array();
-	foreach ($recentMessages->payload->list as $data) {
-		if (!in_array($data->message_from->guid, $guids)) $guids[] = intval($data->message_from->guid,10);
-		if (!in_array($data->message_to->guid, $guids)) $guids[] = intval($data->message_to->guid,10);
-	}
-
-	foreach($friends as $friend) {
-		if($friend instanceof OssnUser) {
-			echo print_r($friend->iconURL()->small);
-		}
-		
-	}								
-}			
+	$pusherChannel = "Group_".$groupid;
+	$pusherEvent = "msgStatus";
+	$pusher->trigger($pusherChannel, $pusherEvent, $data);
+	return;
+}	
 if ((input('action') !== null) && (input('action') == 'leaveGroup')) {
 	if (empty(input('groupid'))) {
 		echo setReturnArray ("Failed", "No groupid provided");
 		return false;
 	}
-	
+	$groupid = input('groupid');
 	if (!$group = $WebChat->removeMember(input('groupid'), ossn_loggedin_user()->guid)) {
 		echo setReturnArray ("Success", ossn_print('com:webchat:group:leavegroup:success'),array('message' => ossn_loggedin_user()->fullname.ossn_print('com:webchat:group:leavegroup:info')));
+		
+		// Refresh everybodies group info - members and photo
+		$pusherChannel = "Group_".$groupid;
+		$pusherEvent = "groupMembership";
+		$data['message'] = array("id" => $groupid, "action" => "Refresh");
+		$pusher->trigger($pusherChannel, $pusherEvent, $data);
+		
 		return;
 	}
 	echo setReturnArray ("Failed", $group );
+	return;
+}	
+if ((input('action') !== null) && (input('action') == 'deleteGroup')) {
+	if (empty(input('groupid'))) {
+		echo setReturnArray ("Failed", "No groupid provided");
+		return false;
+	}
+	$owner = ossn_loggedin_user()->guid;	
+	$groupid = input('groupid');
+	
+	if (!$group = $WebChat->getGroup($groupid)) {
+		echo setReturnArray ('Error', 'Unable to getGroup');
+		return false;
+	}
+	
+	// STEPS TO DELETE GROUP
+	// Find all user photos in messages - delete the files and messages
+	if ($groupimages = $WebChat->getGroupImages($groupid)){
+		$groupimages = json_decode(json_encode($groupimages),true);	
+		foreach ($groupimages as $image) {
+			$WebChat->deleteMessage($image['messageid'], $image['owner'], $groupid);
+			$images = json_decode(json_encode(html_entity_decode($image['image'])),true);
+			unlink($images['img']);
+			unlink($images['bigImg']);
+		}
+	}
+	
+	// Remove group photos
+	$groupphotos = $WebChat->getGroupPhotos($groupid);
+	$groupimages_dir = ossn_route()->www . 'images/groups/' . $groupid . '/';
+
+	if ($groupphotos = json_decode(json_encode($groupphotos),true)){
+		foreach ($groupphotos as $photo) {
+			$tmp = $WebChat->removePhoto($groupid, $photo['id'], $owner);
+			$tmp = json_decode(json_encode($tmp),true);
+			
+			if (!$tmp[0]['filename']) {
+				echo setReturnArray ("Error", "There was an error removing the image.", array('debug' => $tmp));
+				return false;
+			}
+			
+			if (!$del = unlink($groupimages_dir . $tmp[0]['filename'])) {
+				echo setReturnArray ("Error", "There was an error deleting the image.", array("folder" => $groupimages_dir, "filename" => $tmp[0]['filename']));
+				return false;
+			}
+		}
+	} 
+	// Delete the empty group folder if it exists
+	if (is_dir($groupimages_dir)) {
+		rmdir($groupimages_dir);
+	}	
+	
+	
+	// Find and delete all URL preview thumbs
+	if ($grouppreviews = $WebChat->getGroupPreviews($groupid)) {
+		$grouppreviews = json_decode(json_encode($grouppreviews),true);	
+		foreach ($grouppreviews as $preview) {
+			$preview = json_decode(json_encode(html_entity_decode($preview['preview'])),true);
+			unlink(ossn_route()->www . 'images/users/' . $preview['img']);
+		}
+	}
+
+	// Delete group
+	if (!$response = $WebChat->deleteGroup($groupid, $owner)){
+		echo setReturnArray ("Error", "Error deleting group.", array('response' => $response));
+		return;
+	}
+	
+	// Pusher - exit group page and refresh list /  unsubscribe
+	$pusherChannel = "Group_".$groupid;
+	$pusherEvent = "groupMembership";
+	$data['message'] = array("id" => $groupid, "action" => "Removed");
+	$pusher->trigger($pusherChannel, $pusherEvent, $data);
+
+	echo setReturnArray ("Success", "Group has been removed." );
 	return;
 }		
 if ((input('action') !== null) && (input('action') == 'delegateAdmin')) {
@@ -423,6 +342,7 @@ if ((input('action') !== null) && (input('action') == 'getGroups')) {
 	
 	foreach($groups as $index => $record) {
 		$groups[$index]['time'] = elapsed_time($groups[$index]['time']);
+		$groups[$index]['msgstatus'] = $WebChat->getMsgStatus ($groups[$index]['groupid'], ossn_loggedin_user()->guid, $groups[$index]['messageid']);
 		if (empty($groups[$index]['name'])) {
 				$members = $WebChat->getGroupMembers($groups[$index]['groupid']);
 				$members = json_decode(json_encode($members),true);
@@ -467,7 +387,29 @@ if ((input('action') !== null) && (input('action') == 'renameGroup')) {
 		return false;
 	}
 	
+	// Refresh everybodies group info - members and photo
+	$pusherChannel = "Group_".$groupid;
+	$pusherEvent = "groupMembership";
+	$data['message'] = array("id" => $groupid, "action" => "Refresh");
+	$pusher->trigger($pusherChannel, $pusherEvent, $data);
+	
+	error_log ("Sending the following to Pusher: ".print_r($data['message'],true));
+	
 	echo setReturnArray ("Success", "Successfully renamed the group.",array('message' => ossn_loggedin_user()->fullname.ossn_print('com:webchat:group:rename:info'), 'name' => $name));
+	return;
+}					
+if ((input('action') !== null) && (input('action') == 'getGroupImages')) {
+	if (empty(input('groupid'))) {
+		echo setReturnArray ("Failed", "No group id provided: groupid = ".input('groupid'));
+		return false;
+	}
+	
+	$group = input('groupid');
+	if (!$groupimages = $WebChat->getGroupImages($group)) {
+		return false;
+	}
+	
+	echo setReturnArray ("Success", "Successfully retrieved photos.", $groupimages);
 	return;
 }					
 if ((input('action') !== null) && (input('action') == 'getGroupPhotos')) {
@@ -505,7 +447,7 @@ if ((input('action') !== null) && (input('action') == 'getContacts')) {
 if ((input('action') !== null) && (input('action') == 'createGroup')) {
 	$name = input('name') ? input('name') : '';
 	$owner = ossn_loggedin_user()->guid;
-	$guids = explode(',', input('guids'));
+	$guids = explode(', ', input('guids'));
 	if ($groupid = $WebChat->createGroup($name,$owner)) {
 		if (!$WebChat->addMember($groupid, $owner)) {
 			echo setReturnArray ("Failed", "Unable to set owner of group.");
@@ -521,6 +463,18 @@ if ((input('action') !== null) && (input('action') == 'createGroup')) {
 			}
 		}
 	}
+	$guids[] = ossn_loggedin_user()->guid;
+	foreach ($guids as $guid) {	
+		$pusherChannel = "User_".$guid;
+		$pusherEvent = "groupMembership";
+		$data['message'] = array("id" => $groupid,
+								 "groupname" => $name,
+								 "groupowner" => $owner,
+								"elapsed" => date("H:i"),
+								"action" => "Added");
+		$pusher->trigger($pusherChannel, $pusherEvent, $data);
+	}
+	
 	echo setReturnArray ("Success", "Group created.", $groupid);
 
 	return;
@@ -539,18 +493,20 @@ if ((input('action') !== null) && (input('action') == 'getGroupMessages')) {
 
 	foreach ($messages as $i => $message) {
 		$messages[$i]['message'] = str_ireplace("\r\n","<br />", $messages[$i]['message']);
+		$messages[$i]['elapsed'] = elapsed_time($messages[$i]['time']);	
+		$messages[$i]['statuses'] = json_decode(json_encode($WebChat->getMsgGroupStatus($group, $userid, $messages[$i]['id'])), true);
 		if ($message['preview']) {
 			$preview = json_decode($message['preview'],true);		
 			$tmp = json_decode(json_encode($WebChat->getThumbURL($preview['thumbid'])),true);
 			$preview['thumb'] = $tmp[0]['photo'];
 			$messages[$i]['preview'] = $preview;
-			$messages[$i]['elapsed'] = elapsed_time($messages[$i]['time']);		
 		}
 	}
+	
 	echo json_encode($messages);
 	return;
 }		
-if ((input('action') !== null) && (input('action') == 'send')) {
+if ((input('action') !== null) && (input('action') == 'send')) {						// pusher_newMessage
 	if (empty(input('group')) || empty(input('message'))) {
 		echo setReturnArray ("Failed", 'empty parameters');
 		return false;
@@ -565,13 +521,16 @@ if ((input('action') !== null) && (input('action') == 'send')) {
 	$message = str_ireplace(array('<br /><br />','<br />'),'\r\n', $nl2br);
 	$message = str_ireplace(array('&amp;'),'&', $message);
 	
-	if(trim(ossn_restore_new_lines($message)) == ''){
-		echo 0;
-		exit;
-	}
+	// if(trim(ossn_restore_new_lines($message)) == ''){
+		// echo 0;
+		// exit;
+	// }
 	$to = input('to');
 	
-	if (!empty(input('status')) && input('status') == 'info') {
+	
+	empty(input('status')) ? $type = 0 : $type = (input('status'));
+	
+	if ($type == '2') {  //INFO MESSAGES ARE SENT FROM SYSTEM - UserID 0;
 		$userid = 0;
 	} else {
 		$userid = ossn_loggedin_user()->guid;
@@ -581,24 +540,42 @@ if ((input('action') !== null) && (input('action') == 'send')) {
 	// $url_pattern = '/((https?|ftp|file)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\.\/\?\:@\-_=#])*/';
 	$url_pattern = '/((https?|ftp|file)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\.\/\?\:@\-_=#])*/';
 	
-
+	// Type 0 - Default, normal text message
+	// Type 1 - GIPHY message
+	// Type 2 - Info message
+	// Type 3 - Upload Image Message
+	
 	$preview = false;
-	if(preg_match($url_pattern, $message, $m)) {
-		$preview = wcGetURLPreview($m[0]);
+	if ($type == 0) {
+		if(preg_match($url_pattern, $message, $m)) {
+			$preview = wcGetURLPreview($m[0]);
+		}
 	}
 	
-	if (!$message_id = $send->sendMessage($group, $userid, urldecode($message),$preview)) {
+	if (!$message_id = $send->sendMessage($group, $userid, urldecode($message),$preview, $type)) {
 		echo setReturnArray ("Failed", $message_id );
 		return false;
 	}
 	
-	echo setReturnArray ("Success", "Succesfully sent message", $message_id);
+	$pusherChannel = "Group_".$group;
+	$pusherEvent = "newMessage";
+    $data['message'] = array("id" => $message_id['messageid'],
+							 "groupid" => $group,
+							"message_from" => $userid,
+							"message" => $message,
+							"preview" => $message_id['preview'],
+							"elapsed" => date("H:i"),
+							"type" => input('status'));
+    $pusher->trigger($pusherChannel, $pusherEvent, $data);
+  
+	echo setReturnArray("Success", "Succesfully sent message", $message_id);
 	return;
 }
 if ((input('action') !== null) && (input('action') == 'setGroupPhoto')) {
 	
+	$groupid = input('groupid');
 	$filename = uniqid(rand(), true) . '.png';
-	$groupimages_dir = ossn_route()->www . 'images/groups/' . input('groupid') . '/';
+	$groupimages_dir = ossn_route()->www . 'images/groups/' . $groupid . '/';
 	$site  = new OssnFile;
 	$site->setFile('group_image');
 	$site->setExtension(array(
@@ -642,10 +619,17 @@ if ((input('action') !== null) && (input('action') == 'setGroupPhoto')) {
 		}
 
 
-		if (!$groupphoto = $WebChat->changePhoto(input('groupid'), $filename, ossn_loggedin_user()->guid)) {
+		if (!$groupphoto = $WebChat->changePhoto($groupid, $filename, ossn_loggedin_user()->guid)) {
 			echo setReturnArray ("Failed", "There was a problem changing the group's photo.");
 			return false;
 		}
+		
+		// Refresh everybodies group info - members and photo
+		$pusherChannel = "Group_".$groupid;
+		$pusherEvent = "groupMembership";
+		$data['message'] = array("id" => $groupid, "action" => "Refresh");
+		$pusher->trigger($pusherChannel, $pusherEvent, $data);
+	
 		echo setReturnArray ("Success", ossn_print('com:webchat:group:changephoto:success'),array('message' => ossn_loggedin_user()->fullname.ossn_print('com:webchat:group:changephoto:info'), 'filename' => $filename));
 		return;
 	} 
@@ -689,6 +673,8 @@ if ((input('action') !== null) && (input('action') == 'getThumbs')) {
 
 				if ($image_info['mime'] == 'image/png') {
 					$extension = 'png';
+				} elseif ($image_info['mime'] == 'image/gif') {
+					$extension = 'gif';
 				} else {
 					$extension = 'jpg';
 				}
@@ -725,6 +711,9 @@ if ((input('action') !== null) && (input('action') == 'getThumbs')) {
 					} elseif ($extension == 'png' || $extension == 'PNG') {
 						//then return the image as a png image for the next step
 						$img = imagecreatefrompng($source_url);
+					} elseif ($extension == 'gif' || $extension == 'GIF') {
+						//then return the image as a gif image for the next step
+						$img = imagecreatefromgif($source_url);
 					} else {
 						//show an error message if the file extension is not available
 						echo 'image extension is not supported (getThumbs)';
@@ -758,8 +747,8 @@ if ((input('action') !== null) && (input('action') == 'getThumbs')) {
 			echo setReturnArray ("Failed",'Error creating folder');
 			return false;
 		}
-
-		echo setReturnArray ("Success", "Photo message sent",array('hd' => "/users/". ossn_loggedin_user()->guid  . '/' . $filename . "." . $extension, 'thumb' => "/users/". ossn_loggedin_user()->guid  . '/' . "thumb_" . $filename . "." . $extension));
+		
+		echo setReturnArray ("Success", "Photo message sent",array('bigImg' => "/users/". ossn_loggedin_user()->guid  . '/' . $filename . "." . $extension, 'img' => "/users/". ossn_loggedin_user()->guid  . '/' . "thumb_" . $filename . "." . $extension));
 		return;
 	} 
 	echo setReturnArray ("Failed", "There was a problem changing the group's photo.");
@@ -770,22 +759,30 @@ if ((input('action') !== null) && (input('action') == 'selectPhoto')) {
 		echo setReturnArray ("Failed", "No group id or photo provided");
 		return false;
 	}
-	
-	$tmp = $WebChat->ownerCheck(input('groupid'));
+	$groupid = input('groupid');
+	$tmp = $WebChat->ownerCheck($groupid);
 	$tmp = json_decode(json_encode($tmp),true);
 	if (!$tmp[0]['owner'] == ossn_loggedin_user()->guid) {
 		echo setReturnArray ("Error", ossn_print('com:webchat:group:permissions'). " user:".ossn_loggedin_user()->guid);
 		return false;	
 	}
 	
-	if (!$groupphoto = $WebChat->changePhoto(input('groupid'), input('selected'), ossn_loggedin_user()->guid, true)) {
+	if (!$groupphoto = $WebChat->changePhoto($groupid, input('selected'), ossn_loggedin_user()->guid, true)) {
 		echo setReturnArray ("Failed", "There was a problem changing the group's photo.");
 		return false;
 	}
+	
+	// Refresh everybodies group info - members and photo
+	$pusherChannel = "Group_".$groupid;
+	$pusherEvent = "groupMembership";
+	$data['message'] = array("id" => $groupid,
+							 "action" => "Refresh");
+	$pusher->trigger($pusherChannel, $pusherEvent, $data);
+	
 	echo setReturnArray ("Success", ossn_print('com:webchat:group:changephoto:success'),array('message' => ossn_loggedin_user()->fullname.ossn_print('com:webchat:group:changephoto:info'), 'filename' => input('selected')));
 	return;
 }
-if ((input('action') !== null) && (input('action') == 'addMembers')) {
+if ((input('action') !== null) && (input('action') == 'addMembers')) {					// pusher_groupMembership
 	if (empty(input('groupid')) || empty(input('guids'))) {
 		echo setReturnArray ("Failed", "No group id or members");
 		return false;
@@ -798,17 +795,34 @@ if ((input('action') !== null) && (input('action') == 'addMembers')) {
 		return false;	
 	}
 	$groupid = input('groupid');
+	$group = json_decode(json_encode($WebChat->getGroup($groupid)), true);
 	$adds[]  = array_map('intval', explode(', ', input('guids')));	
-	
+		
 	foreach ($adds[0] as $newmember) {
 		if (!$WebChat->addMember($groupid, $newmember)) {
 			echo setReturnArray ("Error", "There was an error adding member " . $newmember);
 			return false;
 		}
+		$pusherChannel = "User_".$newmember;
+		$pusherEvent = "groupMembership";
+		
+		$data['message'] = array("id" => $group[0]['id'],
+								 "groupname" => $group[0]['name'],
+								 "photo" => $group[0]['photo'],
+								 "elapsed" => date("H:i"),
+								 "action" => "Added");
+		$pusher->trigger($pusherChannel, $pusherEvent, $data);
 	}
-	
+
+	// Refresh everybodies group info - members and photo
+	$pusherChannel = "Group_".$groupid;
+	$pusherEvent = "groupMembership";
+	$data['message'] = array("id" => $groupid,
+							 "action" => "Refresh");
+	$pusher->trigger($pusherChannel, $pusherEvent, $data);
+		
 	$addNames = array();
-	
+
 	if (count($adds[0]) == 1 ) {
 		$user 		= new OssnUser();
 		$user->guid = $adds[0][0];
@@ -827,7 +841,7 @@ if ((input('action') !== null) && (input('action') == 'addMembers')) {
 	echo setReturnArray ("Success", "Members added.", array('message' => $addSummary, 'added' => $adds[0]));
 	return;
 }
-if ((input('action') !== null) && (input('action') == 'removeMembers')) {
+if ((input('action') !== null) && (input('action') == 'removeMembers')) {				// pusher_groupMembership
 	if (empty(input('groupid')) || empty(input('removes'))) {
 		echo setReturnArray ("Failed", "No group id or members");
 		return false;
@@ -847,10 +861,15 @@ if ((input('action') !== null) && (input('action') == 'removeMembers')) {
 			echo setReturnArray ("Error", "There was an error removing member " . $removemember, array('groupid'=>$groupid,'member'=>$removemember));
 			return false;
 		}
+		$pusherChannel = "User_".$removemember;
+		$pusherEvent = "groupMembership";
+		$data['message'] = array("id" => $groupid,
+								"action" => "Removed");
+		$pusher->trigger($pusherChannel, $pusherEvent, $data);
 	}
 
-	$removeNames = array();
 	
+	$removeNames = array();
 	if (count($removes[0]) == 1 ) {
 		$user 		= new OssnUser();
 		$user->guid = $removes[0][0];
@@ -865,40 +884,66 @@ if ((input('action') !== null) && (input('action') == 'removeMembers')) {
 		}
 		$removalSummary = natural_language_join($removeNames) . " have been removed from the group.";
 	} else $removalSummary = null;
-		
+			
 	echo setReturnArray ("Success", "Members removed.", array('message' => $removalSummary, 'removed' => $removes[0]));
 	return;
 }
 if ((input('action') !== null) && (input('action') == 'deletePhoto')) {
-	if (empty(input('groupid')) || empty(input('photoid'))) {
-		echo setReturnArray ("Failed", "No group id or photoid");
+	if (empty(input('groupid')) || (input('type')=="user" && (empty(input('messageid')) || empty(input('file1')) || empty(input('file2')))) || (input('type')=="group" && empty(input('photoid')))) {
+		echo setReturnArray ("Failed", "Not enough parameters");
 		return false;
 	}
+	$userid = ossn_loggedin_user()->guid;
 	
 	$tmp = $WebChat->ownerCheck(input('groupid'));
 	$tmp = json_decode(json_encode($tmp),true);
-	if (!$tmp[0]['owner'] == ossn_loggedin_user()->guid) {
-		echo setReturnArray ("Error", ossn_print('com:webchat:group:permissions'). " user:".ossn_loggedin_user()->guid);
+	if (!$tmp[0]['owner'] == $userid) {
+		echo setReturnArray ("Error", ossn_print('com:webchat:group:permissions'). " user:$userid");
 		return false;	
 	}
-	$groupid = input('groupid');
-	$photoid = input('photoid');
+	$groupid 	= input('groupid');
+	$photoid 	= input('photoid');
+	$type 	 	= input ('type');
+	$file	 	= input ('file1');
+	$file_thumb	 	= input ('file2');
+	$messageid	= input ('messageid');
+	error_log ("About to delete a photo type='$type', group='$groupid', file='$file', file_thumb='$file_thumb', user='$userid', msgid='$messageid'");
+	$msgValid = $WebChat->getMsgStatus ($groupid, $userid, $messageid);
+	if ($type == "user" && $msgValid) {
 
-	$tmp = $WebChat->removePhoto($groupid, $photoid, ossn_loggedin_user()->guid);
-	$tmp = json_decode(json_encode($tmp),true);
+		$WebChat->deleteMessage($messageid, ossn_loggedin_user()->guid, $groupid);
+		
+		unlink($file);
+		unlink($file_thumb);
+		
+		// Refresh everybodies group info - members and photo
+		$pusherChannel = "Group_".$groupid;
+		$pusherEvent = "messageDeleted";
+		$data['message'] = array("id" => $messageid, "group" => $groupid);
+		$pusher->trigger($pusherChannel, $pusherEvent, $data);
+		
+	} else {
+		$tmp = $WebChat->removePhoto($groupid, $photoid, ossn_loggedin_user()->guid);
+		$tmp = json_decode(json_encode($tmp),true);
 	
-	if (!$tmp[0]['filename']) {
-		echo setReturnArray ("Error", "There was an error removing the image.", array('debug' => $tmp));
-		return false;
-	}
-	
-	
-	$groupimages_dir = ossn_route()->www . 'images/' . input('groupid') . '/';
-	if (!$del = unlink($groupimages_dir . $tmp[0]['filename'])) {
-		echo setReturnArray ("Error", "There was an error deleting the image.", array("folder" => $groupimages_dir, "filename" => $tmp[0]['filename']));
-		return false;
+		if (!$tmp[0]['filename']) {
+			echo setReturnArray ("Error", "There was an error removing the image.", array('debug' => $tmp));
+			return false;
+		}		
+		$groupimages_dir = ossn_route()->www . 'images/groups/' . $groupid . '/';
+		if (!$del = unlink($groupimages_dir . $tmp[0]['filename'])) {
+			echo setReturnArray ("Error", "There was an error deleting the image.", array("folder" => $groupimages_dir, "filename" => $tmp[0]['filename']));
+			return false;
+		}
+		// Refresh everybodies group info - members and photo
+		$pusherChannel = "Group_".$groupid;
+		$pusherEvent = "groupMembership";
+		$data['message'] = array("id" => $groupid, "action" => "Refresh");
+		$pusher->trigger($pusherChannel, $pusherEvent, $data);
 	}
 
+
+		
 	echo setReturnArray ("Success", "Photo removed.");
 	return;
 }
@@ -949,10 +994,10 @@ function wcGetURLPreview ($url) {
 	$doc = new DOMDocument();
 	@$doc->loadHTML($html);
 	$nodes = $doc->getElementsByTagName('title');
-	if(trim(ossn_restore_new_lines($html)) == ''){
-		echo 0;
-		exit;
-	}
+	// if(trim(ossn_restore_new_lines($html)) == ''){
+		// echo 0;
+		// exit;
+	// }
 	preg_match_all("/<img.+?src=[\\'\"\/]([^\\'\"]+)[\\'\"].*?>/", $html, $images);
 	$site = parse_url($url);
 	$site = $site['host'];	
@@ -964,7 +1009,6 @@ function wcGetURLPreview ($url) {
 			if ($ext = getExtension($tmp)) {
 				if ($tmp[0] == "/") $tmp = $site . $tmp;
 				if (strtolower($tmp[0]) != "h")  $tmp = "https://" . $tmp;
-				error_log ("About to check $tmp with extension of $ext");
 				if (checkImageDims($tmp, $ext)) $image = $tmp;
 			}
 		}
@@ -1031,21 +1075,15 @@ function wcGetURLPreview ($url) {
 		if ($wcImage[0] == "/") $wcImage = $wcSite . $wcImage;
 		if (strtolower($wcImage[0]) != "h")  $wcImage = "https://" . $wcImage;
 	}
-	error_log ("getExtension($wcImage) = $type before sending to urlPreviewThumb($wcImage, $type)");
 	if ($wcImage && $type) {
 		if ($tempThumb = urlPreviewThumb($wcImage, $type)) $wcImage = $tempThumb['thumb'];
 	}
-	error_log ("Before proceeding to return the array $wcTitle  $wcDescription  $wcImage");
-
 	
 	if (($wcTitle || $wcDescription) && !$wcImage) {
-		error_log ("Either Title or Description found and NO IMAGE");
 		return array( "sitename" => $wcSite, "title" => $wcTitle, "description" => $wcDescription, "image" => null, "url" => $url_stored, "thumbcolour" => null, "debug" => $debug);
 	} else if (($wcTitle || $wcDescription) && $wcImage) {
-		error_log ("Either Title or Description found and includes IMAGE");
 		return array( "sitename" => $wcSite, "title" => $wcTitle, "description" => $wcDescription, "image" => $wcImage, "url" => $url_stored, "thumbcolour" => $tempThumb["thumbcolour"], "debug" => $debug);
 	}  else if ($wcTitle || $wcDescription) {
-		error_log ("Either Title or Description found");
 		return array( "sitename" => $wcSite, "title" => $wcTitle, "description" => $wcDescription, "image" => null, "url" => $url_stored, "thumbcolour" => null, "debug" => $debug);
 	} else {
 		return false;
@@ -1108,14 +1146,9 @@ function urlPreviewThumb($source_url, $type) {
 				$thumbrgb = "rgb($r, $g, $b)";
 				imagedestroy($img);
 				imagedestroy($imgResized);
-				error_log ("Saved thumbnail to server");
 				return array("thumb" => ossn_loggedin_user()->guid . '/' . $filename . "." . $extension, "thumbcolour" => $thumbrgb);
-			} else {
-				error_log ("Did not save a thumbnail to the server");
 			}
-		}
-		error_log ("Finished URL Thumb Preview without doing anything???");
-		
+		}	
 	}
 	return false;
 }
@@ -1131,7 +1164,6 @@ function checkImageDims($source_url, $extension) {
 	} elseif ($extension == '.bmp' || $extension == '.BMP') {
 		$img = imagecreatefrombmp($source_url);
 	} else {
-		error_log ("No image type match");
 		return false;
 	}
 
@@ -1143,10 +1175,8 @@ function checkImageDims($source_url, $extension) {
 	$ix = ImageSX($img);
 	$iy = ImageSY($img);
     if ( $ix >= $minx &&  $iy >= $miny) {
-		error_log ("Image size is acceptable $ix x $iy");
 		return true;
 	}
 	# Size is not acceptable
-	error_log ("Image too small $ix x $iy");
     return false;
 }
