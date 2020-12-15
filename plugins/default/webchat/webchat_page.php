@@ -31,25 +31,51 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 	<input id="activeContact" type="number" value="-1" hidden />
 	<div id="sidepanel">
 		<div id="profile">
-			<!--<div class="wrap">-->
 			<?php 
-			  if ($WebChatSettings->homeButton==1) {
-				  if ($WebChatSettings->homeURL==1) echo '<a href="' . ossn_site_url($WebChatSettings->homeURLPath) . '" class="button">';
-				  
-				  if ($WebChatSettings->homeButtonStyle==0)echo '<i class="fa ' . $WebChatSettings->homeChar . '"></i>';
-				  
-				  if ($WebChatSettings->homeButtonStyle==1)echo '<img src="' . $WebChatSettings->homeImgPath . '" alt=""/>';
-				  
-				  echo '<span>' . ossn_print('com:webchat:homebutton') . '</span>';
-				  
-				  if ($WebChatSettings->homeURL==1) echo '</a>';
-				  
-			  }?>
+			  // if ($WebChatSettings->homeButton==1) {
+				  // if ($WebChatSettings->homeURL==1) echo '<a href="' . ossn_site_url($WebChatSettings->homeURLPath) . '" class="button">';
+				  // if ($WebChatSettings->homeButtonStyle==0)echo '<i class="fa ' . $WebChatSettings->homeChar . '"></i>';
+				  // if ($WebChatSettings->homeButtonStyle==1)echo '<img src="' . $WebChatSettings->homeImgPath . '" alt=""/>';
+				  // echo '<span>' . ossn_print('com:webchat:homebutton') . '</span>';
+				  // if ($WebChatSettings->homeURL==1) echo '</a>';				  
+			  // }
+			  ?>
+			 <button id="homeButton">
+				<i class="fa fa-home fa-fw" aria-hidden="true"></i>
+				<span><?php echo ossn_print('com:webchat:homebutton'); ?></span>
+			</button>
+			 <button id="chatButton" data-panel='contacts' class="option active">
+				<span>Chats</span>
+			</button>
+			 <button id="newsButton" data-panel='newspanel' class="option">
+				<span>Newsfeed</span>
+			</button>
+			 <button id="profileButton" data-panel='profilepanel' class="option">
+				<span>Profile</span>
+			</button>
+			 <button id="searchButton" data-panel='searchpanel' class="option">
+				<span>Search</span>
+			</button>
+			 <button id="accountButton" data-panel='accountpanel' class="option">
+				<span>Account</span>
+			</button>
 		</div>
-		<div id="contacts">
-			<ul>
-			</ul>
-		</div>
+			<div id="contacts" class="activepanel">
+				<ul>
+				</ul>
+			</div>
+			<div id="newspanel">
+				<p>this is where newsfeed will go</p>
+			</div>
+			<div id="profilepanel">
+				<p>this is where profile will go</p>
+			</div>
+			<div id="searchpanel">
+				<p>this is where search will go</p>
+			</div>
+			<div id="accountpanel">
+				<p>this is where account will go</p>
+			</div>
 		<div id="bottom-bar">
 			<button id="addChat">
 				<i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>
@@ -196,19 +222,6 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 					<p class="sitename"></p>
 				</span>
 			</div>
-			<!-- <div class="media-options"> -->
-				<!-- <i class="fa fa-video-camera" aria-hidden="true"></i> -->
-				<!-- <i class="fa fa-phone" aria-hidden="true"></i> -->
-				<!-- <i class="fa fa-ellipsis-v message-menu" aria-hidden="true"></i> -->
-				<!-- <div id="message-menu" class="dropdown-content"> -->
-					<!-- <ul> -->
-					<!-- <li id="view-user-btn">View User Details</li> -->
-					<!-- <li id="report-user-btn">Report User</li> -->
-					<!-- <li id="block-user-btn">Block User</li> -->
-					<!-- <li id="clear-chat-btn">Clear Chat</li> -->
-					<!-- </ul> -->
-				<!-- </div> -->
-			<!-- </div> -->
 			<button class="siteappinstaller-install-button" >
 				<i class="fa fa-download fa-fw\" aria-hidden="true"></i>
 				<span><?php echo ossn_print('com:webchat:account_settings_section_button'); ?></span>
@@ -418,10 +431,10 @@ $('#main-input').on('input', function () {
 webchat_root = "<?php echo $path_wcroot; ?>";
 var friends = null;
 var images_path = "<?php echo ossn_site_url('images'); ?>";
+$('#contacts').clone(false,false).after('#sidepanel #profile');
 
 /* PAGE READY */
 $(function() {
-
 	channel = "User_<?php echo ossn_loggedin_user()->guid; ?>";
 	var channel = pusher.subscribe(channel);
 	channel.bind('groupMembership', function(data) {
@@ -658,6 +671,18 @@ $('li.contact').click(function() {																			// Click a contact to open 
 	  $("#frame .content").removeClass("outRight");
 	  $("#frame .content").addClass("onFromRight");
   });
+});
+$('#profile button.option').click(function() {																			// Click a menu button
+	var currentid = $('#sidepanel').find('.activepanel').attr('id');
+	var newpanel = $('#' + $(this).attr('data-panel'));
+	$('#profile button').removeClass('active');
+	$(this).addClass('active');
+	$('#'+ currentid).fadeOut();
+	$('#'+ currentid).removeClass('activepanel');	
+	$('#'+ currentid).promise().done(function(){
+		$(newpanel).fadeIn();
+		$(newpanel).addClass('activepanel');
+	});
 });
 
 /* CALLBACKS */
@@ -1480,7 +1505,7 @@ function wcNewMessage(type = 0, giphyImg = null, giphyBig = null, infoMsg = null
 					  message: message,
 					  status: type
 					});
-					$('#main-input').val(null).blur();
+					// $('#main-input').val(null).blur();
 					$('#main-input').css("height","15px");
 					$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
 					$("#frame .content .message-input .wrap .fa").css("bottom","-32px");				
@@ -1500,7 +1525,7 @@ function wcNewMessage(type = 0, giphyImg = null, giphyBig = null, infoMsg = null
 
 	if (type != 3) {
 		// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
-		$('#main-input').val(null).blur();
+		if (type == 0) $('#main-input').val(null).blur();
 		$('#main-input').css("height","15px");
 		$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
 		$("#frame .content .message-input .wrap .fa").css("bottom","-32px");

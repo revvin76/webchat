@@ -17,7 +17,8 @@
   --main-bg-color-white: #ffffff;
   --main-font-size-normal:0.8em;
   --main-font-color-placeholder:#32465a;
-  --main-border-radius: 20px;
+  --main-font-color-dark-on-light: #32465a;
+  --main-border-radius: 10px;
   --main-message-indicator-unread: #7b7b7b;
   --main-message-indicator-read: #8bdbf9;
   --main-font-color-light-on-dark: #f5f5f5;
@@ -85,13 +86,51 @@ body {
   text-align: center;
   z-index: var(--main-menus);
 }
-@media screen and (max-width: 735px) {
-  #frame #sidepanel #profile {
-    width: 100%;
-    margin: 0 auto;
-    padding: 0;
-    background: #32465a;
-  }
+/* @media screen and (max-width: 735px) { */
+  /* #frame #sidepanel #profile { */
+    /* width: 100%; */
+    /* margin: 0 auto; */
+    /* padding: 0; */
+    /* background: #32465a; */
+  /* } */
+/* } */
+#frame #sidepanel #profile {
+  /* position: fixed; */
+  width: 100%;
+  top: 0vh;
+  display: grid;
+  grid-template-rows: repeat(1, 30px);
+  gap: 0;
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
+}
+#frame #sidepanel #profile button {
+  border: none;
+  background-color: #32465a;
+  color: var(--main-font-color-light-on-dark);
+  cursor: pointer;
+  font-size: 0.6em;
+  font-family: "proxima-nova",  "Source Sans Pro", sans-serif;
+}
+#frame #sidepanel #profile button.active {
+  border-bottom: solid 2px var(--main-font-color-light-on-dark);
+  background: var(--main-bg-color);
+}
+#frame #sidepanel #profile button:focus {
+  outline: none;
+}
+#frame #sidepanel #profile button:disabled {
+  display:none;
+}
+#frame #sidepanel #profile button:nth-child(1) {
+  border-right: 1px solid #2c3e50;
+}
+/* #frame #sidepanel #profile button:hover { */
+  /* background: var(--main-bg-color); */
+/* } */
+#frame #sidepanel #profile button i {
+  margin-right: 3px;
+  font-size: 1em;
 }
 #frame #sidepanel #profile img {
 	max-height: 80px;
@@ -148,12 +187,37 @@ body {
     display: none;
   }
 } 
+#frame #sidepanel #newspanel {
+	display:none;
+	background-color: var(--main-bg-color-light);
+	color: var(--main-font-color-dark-on-light);
+	min-height: 100vh;	
+}
+#frame #sidepanel #profilepanel {
+	background-color: var(--main-bg-color-light);
+	color: var(--main-font-color-dark-on-light);
+	min-height: 100vh;	
+	display:none;
+}
+#frame #sidepanel #searchpanel {
+	background-color: var(--main-bg-color-light);
+	color: var(--main-font-color-dark-on-light);
+	min-height: 100vh;	
+	display:none;
+}
+#frame #sidepanel #accountpanel {
+	background-color: var(--main-bg-color-light);
+	color: var(--main-font-color-dark-on-light);
+	min-height: 100vh;	
+	display:none;
+}
  /**************************************************************************************/
  #frame #sidepanel #contacts {
   min-height: calc(100vh - 95px);
   overflow-y: scroll;
   overflow-x: hidden;
   margin: auto;
+  background-color: var(--main-bg-color-dark);
 }
 
 @media screen and (max-width: 735px) {
@@ -405,7 +469,7 @@ body {
   width: 100%;
   bottom: 0vh;
   display: grid;
-  grid-template-rows: repeat(1, 55px);
+  grid-template-rows: repeat(1, 30px);
   gap: 0;
   grid-auto-flow: column;
   grid-auto-columns: auto;
