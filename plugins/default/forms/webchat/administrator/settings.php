@@ -22,22 +22,22 @@ $redirecttowc		= false;
 $addlink			= false;
 
 $component = new OssnComponents;
-$settings = $component->getComSettings('webchat');
-if($settings) {
-	$giphyAPIKey 		= $settings->giphyAPIKey;
-	$homeChar    		= $settings->homeChar;
-	$homeButton  		= $settings->homeButton;
-	$homeButtonStyle  	= $settings->homeButtonStyle;
-	$homeURL     		= $settings->homeURL;
-	$homeURLPath    	= $settings->homeURLPath;
-	$homeImgPath    	= $settings->homeImgPath;
-	$pusher_app_id		= $settings->pusher_app_id;
-	$pusher_key			= $settings->pusher_key;
-	$pusher_secret		= $settings->pusher_secret;
-	$pusher_cluster		= $settings->pusher_cluster;
-	$redirecttowc		= $settings->redirecttowc;
-	$addlink			= $settings->addlink;
-}
+$settings = new OssnSite;
+
+$giphyAPIKey 		= $settings->getSettings('wc:giphyAPIKey');
+$homeChar    		= $settings->getSettings('wc:homeChar');
+$homeButton  		= $settings->getSettings('wc:homeButton');
+$homeButtonStyle  	= $settings->getSettings('wc:homeButtonStyle');
+$homeURL     		= $settings->getSettings('wc:homeURL');
+$homeURLPath    	= $settings->getSettings('wc:homeURLPath');
+$homeImgPath    	= $settings->getSettings('wc:homeImgPath');
+$pusher_app_id		= $settings->getSettings('wc:pusher_app_id');
+$pusher_key			= $settings->getSettings('wc:pusher_key');
+$pusher_secret		= $settings->getSettings('wc:pusher_secret');
+$pusher_cluster		= $settings->getSettings('wc:pusher_cluster');
+$redirecttowc		= $settings->getSettings('wc:redirecttowc');
+$addlink			= $settings->getSettings('wc:addlink');
+
 
 ?>
 <link rel="stylesheet" href="<?php echo ossn_site_url('components/webchat/plugins/default/css/admin.css');?>" type='text/css'>
