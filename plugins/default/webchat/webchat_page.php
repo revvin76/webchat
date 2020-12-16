@@ -421,7 +421,6 @@ var images_path = "<?php echo ossn_site_url('images'); ?>";
 
 /* PAGE READY */
 $(function() {
-
 	channel = "User_<?php echo ossn_loggedin_user()->guid; ?>";
 	var channel = pusher.subscribe(channel);
 	channel.bind('groupMembership', function(data) {
@@ -1500,7 +1499,9 @@ function wcNewMessage(type = 0, giphyImg = null, giphyBig = null, infoMsg = null
 
 	if (type != 3) {
 		// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
-		$('#main-input').val(null).blur();
+		if (type != 1) {
+			$('#main-input').val(null).blur();
+		}
 		$('#main-input').css("height","15px");
 		$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
 		$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
