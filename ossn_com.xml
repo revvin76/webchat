@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component xmlns="http://www.opensource-socialnetwork.org/v/3.0">
     <name>Web Chat 2.0 Beta</name>
-    <id>WebChat</id>
+    <id>webchat</id>
     <author>Kevin Brown - kjbtech.co.uk</author>
     <description>WebChat Component - Individually style mobile-first chat</description>
     <license>GNU General Public License, version 2</license>
     <author_url>http://www.kjbtech.co.uk/</author_url>
     <license_url>http://www.opensource-socialnetwork.org/licence/</license_url>
-    <version>2.0b</version>
+    <version>2.0.3b</version>
 	<requires>
 		<type>ossn_version</type>
 		<version>5.6</version>
