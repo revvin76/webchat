@@ -20,6 +20,8 @@ if (isset($params['contents'])) {
 } else {
     $contents = '';
 }
+$component = new OssnComponents;
+$WebChatSettings  = $component->getSettings("webchat"); 
 
 ?>
 <!DOCTYPE html>
@@ -36,6 +38,15 @@ if (isset($params['contents'])) {
 	<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
 	<script src="https://use.typekit.net/hoy3lrg.js"></script>
 	<script>try{Typekit.load({ async: true });}catch(e){}</script>	
+	<script src="https://js.pusher.com/7.0/pusher.min.js"></script>
+	<script>
+	// Enable pusher logging - don't include this in production
+		Pusher.logToConsole = true;
+
+		var pusher = new Pusher('<?php echo $WebChatSettings->pusher_key;?>', {
+		  cluster: '<?php echo $WebChatSettings->pusher_cluster; ?>'
+		});
+	</script>
 </head>
 
 <body>

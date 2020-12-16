@@ -10,7 +10,7 @@ $giphyQuery ="";
 header('Content-Type:text/plain');
 
 if ((input('action') !== null) && (input('action') == 'trending')) {
-	$giphyEndpoint = "http://api.giphy.com/v1/gifs/trending?";
+	$giphyEndpoint = "http://api.giphy.com/v1/gifs/search?q=trending?";
 	$url = $giphyEndpoint.$giphyAPI.$giphyOptions;
 }
 

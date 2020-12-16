@@ -10,14 +10,19 @@
 */
 :root {
   --main-bg-color: #435f7a;
+  --main-bg-color-dark: #2c3e50;
   --main-bg-color-faded: #10171de3;
   --main-bg-color-faded-light: #10171d33;
+  --main-bg-color-light: #E6EAEA;
+  --main-bg-color-white: #ffffff;
   --main-font-size-normal:0.8em;
   --main-font-color-placeholder:#32465a;
   --main-border-radius: 20px;
   --main-message-indicator-unread: #7b7b7b;
   --main-message-indicator-read: #8bdbf9;
   --main-font-color-light-on-dark: #f5f5f5;
+  --main-new-message-bg-colour: #50657b;
+  
   
   /* Z-INDEXES */
   --main-message-image-overlay: 5;
@@ -27,6 +32,9 @@
   --main-blur:50;
   --main-menus:51;
   --main-warning-dialogs: 60;
+  
+  /* ANIMATIONS */
+  --main-items-transition-time: 5s;
 }
 
 body {
@@ -70,7 +78,7 @@ body {
     "."
     "."
     ".";
-  background: #2c3e50;
+  background-color: var(--main-bg-color-dark);
   color: var(--main-font-color-light-on-dark);
   overflow: hidden;
   position: absolute;
@@ -163,7 +171,7 @@ body {
 }
 #frame #sidepanel #contacts::-webkit-scrollbar {
   width: 8px;
-  background: #2c3e50;
+  background-color: var(--main-bg-color-dark);
 }
 #frame #sidepanel #contacts::-webkit-scrollbar-thumb {
   background-color: #243140;
@@ -185,11 +193,21 @@ body {
 		padding-left: 0.2em;
 	}
 }
+
 #frame #sidepanel #contacts ul li {
 	border-width: 1px;
 	border-color: #ffffff11;
 	border-bottom-style: solid;
 	max-height: 50px;
+	background-color: var(--main-bg-color-dark);
+}
+#frame #sidepanel #contacts ul li.new {
+	background-color: var(--main-new-message-bg-colour);
+	-webkit-transition: all var(--main-items-transition-time) ease-in-out;
+	-moz-transition: all var(--main-items-transition-time) ease-in-out;
+	-ms-transition: all var(--main-items-transition-time) ease-in-out;
+	-o-transition: all var(--main-items-transition-time) ease-in-out;
+	transition: all var(--main-items-transition-time) ease-in-out;	
 }
 #frame #sidepanel #contacts ul li div.wrap * {
 	max-height: 50px;
@@ -616,24 +634,27 @@ body {
 	margin: 0;
 	padding: 0;
     width: 90vw;
-    transform: translate(-5%, 10px);
+    transform: translate(-5%, 0);
     margin-left: 5vw;
-	background-color: var(--main-bg-color-faded-light);
+	/* background-color: var(--main-bg-color-faded-light); */
+	font-size: 0.7em;
 }
 #frame .content .messages ul li.info {
     border-radius: 0.4em;
     padding: 5px;
 	width: 90vw;
+	margin-top: 0;
 }
 
 #frame .content .messages ul li.info article section.message {
 	margin: 0;
 	font-size: 0.8em;
-	padding: 5px;
+	padding: 0;
 }
+
 #frame .content .messages ul li.info article section.message_time {
 	font-size: 0.6em;
-	padding: 5px 0;
+	padding: 0;
 }
 #frame .content .messages ul li.sent.giphy {
 	float:right;
@@ -876,7 +897,8 @@ body {
   bottom: 0vh;
   width: 100%;
   z-index: var(--main-ui);
-  background: #fff;
+  background-color: var(--main-bg-color-white);
+  border-top: 1px solid var(--main-bg-color-faded-light);  
 }
 #frame .content .message-input .wrap {
   display: grid;
@@ -1199,6 +1221,9 @@ section.message.im {
 	gap: 0px 0px;
 	grid-auto-flow: column;
 }
+.giphy-fs-container .giphy-fs-image p {
+	color: var(--main-font-color-light-on-dark);
+}
 .giphy-fs-container .giphy-fs-image img {
 	max-width: 100%;
 	max-height: 100%;
@@ -1252,7 +1277,7 @@ section.message.im {
 	overflow: hidden;
 	position: relative;	
 	bottom: 0vh;
-	background: #fff;
+	background-color: var(--main-bg-color-white);
 }
 #frame .content .message-input .giphyPanel:focus {
     outline: none;

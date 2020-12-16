@@ -14,26 +14,37 @@ $homeURL	 	= '/home';
 $homeButtonStyle  	= '1';
 $homeURLPath    	= 'home';
 $homeImgPath    	= '';
+$pusher_app_id		= 'pusher_app_id';
+$pusher_key			= 'pusher_key';
+$pusher_secret		= 'pusher_secret';
+$pusher_cluster		= 'pusher_cluster';
+$redirecttowc		= false;
+$addlink			= false;
 
 $component = new OssnComponents;
-$settings = $component->getComSettings('webchat');
-if($settings) {
-	$giphyAPIKey 		= $settings->giphyAPIKey;
-	$giphyAPIKey 		= $settings->giphyAPIKey;
-	$homeChar    		= $settings->homeChar;
-	$homeButton  		= $settings->homeButton;
-	$homeButtonStyle  	= $settings->homeButtonStyle;
-	$homeURL     		= $settings->homeURL;
-	$homeURLPath    	= $settings->homeURLPath;
-	$homeImgPath    	= $settings->homeImgPath;
-}
+$settings = new OssnSite;
+
+$giphyAPIKey 		= $settings->getSettings('wc:giphyAPIKey');
+$homeChar    		= $settings->getSettings('wc:homeChar');
+$homeButton  		= $settings->getSettings('wc:homeButton');
+$homeButtonStyle  	= $settings->getSettings('wc:homeButtonStyle');
+$homeURL     		= $settings->getSettings('wc:homeURL');
+$homeURLPath    	= $settings->getSettings('wc:homeURLPath');
+$homeImgPath    	= $settings->getSettings('wc:homeImgPath');
+$pusher_app_id		= $settings->getSettings('wc:pusher_app_id');
+$pusher_key			= $settings->getSettings('wc:pusher_key');
+$pusher_secret		= $settings->getSettings('wc:pusher_secret');
+$pusher_cluster		= $settings->getSettings('wc:pusher_cluster');
+$redirecttowc		= $settings->getSettings('wc:redirecttowc');
+$addlink			= $settings->getSettings('wc:addlink');
+
 
 ?>
 <link rel="stylesheet" href="<?php echo ossn_site_url('components/webchat/plugins/default/css/admin.css');?>" type='text/css'>
 
   <ul class="nav nav-tabs">
     <li class="active"><a data-toggle="tab" href="#home"><?php echo ossn_print('com:webchat:admin:title');?></a></li>
-    <li><a data-toggle="tab" href="#menu1"><?php echo ossn_print('com:webchat:admin:giphy');?></a></li>
+    <li><a data-toggle="tab" href="#menu1"><?php echo ossn_print('com:webchat:admin:apitab');?></a></li>
     <li><a data-toggle="tab" href="#menu2"><?php echo ossn_print('com:webchat:admin:pwa:isolation');?></a></li>
     <li><a data-toggle="tab" href="#menu3"><?php echo ossn_print('com:webchat:admin:pwa');?></a></li>
 	<li class="adminSaveBtn"><input onclick="updateForm()" type="submit" value="<?php echo ossn_print('com:webchat:admin:giphy:save');?>" class="btn btn-success"/></li>
@@ -41,9 +52,20 @@ if($settings) {
   <div class="tab-content">
     <div id="home" class="tab-pane fade in active">
       <h3><?php echo ossn_print('com:webchat:admin:title');?></h3>
-      <p><?php echo ossn_print('com:webchat:admin:subtitle');?></p>
+		<ul class="admin-home">
+		  <li class="full">
+			<label class="control-label" for="redirecttowc"><?php echo ossn_print('com:webchat:admin:redirecttowc');?></label>  
+			<input name="redirecttowc" class="margin-top-10" type="checkbox" <?php if ($redirecttowc) echo "checked";?>/>
+		  </li>
+		  <li class="full">
+			<label class="control-label" for="addlink"><?php echo ossn_print('com:webchat:admin:addlink');?></label>  
+			<input name="addlink" class="margin-top-10" type="checkbox" <?php if ($addlink) echo "checked";?>/>
+		  </li>
+		</ul>	
     </div>
+	
     <div id="menu1" class="tab-pane fade">
+		<h2><?php echo ossn_print('com:webchat:admin:apitab');?></h2>
 		<h3><?php echo ossn_print('com:webchat:admin:giphy');?></h3>
 		<ul class="admin-giphy">
 		  <li class="full">
@@ -51,7 +73,27 @@ if($settings) {
 			<input name="giphyAPIKey" class="margin-top-10" type="text" value="<?php echo $giphyAPIKey;?>" placeholder="Obtain a key from https://developers.giphy.com"/>
 		  </li>
 		</ul>
+		<h3><?php echo ossn_print('com:webchat:admin:pusher');?></h3>
+		<ul class="admin-giphy">
+		  <li class="full">
+			<strong><?php echo ossn_print('com:webchat:admin:pusher:app_id');?></strong>
+			<input name="pusher_app_id" class="margin-top-10" type="text" value="<?php echo $pusher_app_id;?>" placeholder="Obtain a key from https://dashboard.pusher.com"/>
+		  </li>
+		  <li class="full">
+			<strong><?php echo ossn_print('com:webchat:admin:pusher:key');?></strong>
+			<input name="pusher_key" class="margin-top-10" type="text" value="<?php echo $pusher_key;?>" placeholder="key"/>
+		  </li>
+		  <li class="full">
+			<strong><?php echo ossn_print('com:webchat:admin:pusher:secret');?></strong>
+			<input name="pusher_secret" class="margin-top-10" type="text" value="<?php echo $pusher_secret;?>" placeholder="secret"/>
+		  </li>
+		  <li class="full">
+			<strong><?php echo ossn_print('com:webchat:admin:pusher:cluster');?></strong>
+			<input name="pusher_cluster" class="margin-top-10" type="text" value="<?php echo $pusher_cluster;?>" placeholder="cluster"/>
+		  </li>
+		</ul>
     </div>
+	
     <div id="menu2" class="tab-pane fade">
 		<h3><?php echo ossn_print('com:webchat:admin:pwa:isolation');?></h3>
 		<ul class="admin-pwa-isolation">
