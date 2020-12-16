@@ -2,6 +2,7 @@
 $component = new OssnComponents;
 $WebChat  = new WebChat;
 $WebChatSettings  = $component->getSettings("webchat");
+$wall       = new OssnWall;
 
 // Validate given token to ensure its valid. Redirect to webchat home if not, where you'll automatically redirect to login if required.
 $ossnts = input('ossn_ts');
@@ -90,13 +91,139 @@ if ((input('action') !== null) && (input('action') == 'welcome')) {
 	}
 	echo setReturnArray ("Fail", "Already seen" );
 	return;
-}	
-if ((input('action') !== null) && (input('action') == 'getuser')) {
-	$userPARAM = array( 'api_key_token' => $apiKey , 'guid' => input('guid'));
-	$userDetails = CallAPI ($userURL , $userPARAM);
-	echo json_encode($userDetails);
-	exit;
-}													
+}												
+if ((input('action') !== null) && (input('action') == 'OssnWall')) {
+
+	// $count = $wall->GetAllPosts();
+	$posts = $wall->GetAllPosts();
+
+	$content = "";
+	$captured = array();
+	if(ossn_user_is_friend(ossn_loggedin_user()->guid, $params['user']->guid) || ossn_loggedin_user()->guid == $params['user']->guid || ossn_isAdminLoggedin()) {
+			$content .= '<div class="ossn-wall-container">';
+			$content .= ossn_view_form('user/container', array(
+					'action' => ossn_site_url() . 'action/wall/post/u',
+					'component' => 'OssnWall',
+					'id' => 'ossn-wall-form',
+					'params' => array(
+							'user' => $params['user']
+					)
+			), false);
+			$content .= '</div>';
+			$captured['wallcontainer'] = $content;
+	}
+	$content .= '<div class="user-activity">';
+	if($posts) {
+			foreach($posts as $post) {
+				$object = $post->guid;
+				$comments = new OssnComments;
+				if($post->full_view !== true){
+					$comments->limit = 5;
+				}
+				if($post->full_view == true){
+					$comments->limit = false;
+					$comments->page_limit = false;
+				}
+			
+				
+				
+					$data     = json_decode(html_entity_decode($post->description));
+					if(!is_object($data)){
+						$data = new stdClass;
+					}
+				
+					// $text     = ossn_restore_new_lines($data->post, true);
+					$text     = $data->post;
+					$location = '';
+					if(isset($data->location)) {
+							$location = '- ' . $data->location;
+					}
+					if(!isset($data->friend)) {
+							$data->friend = '';
+					}
+					if(isset($post->{'file:wallphoto'})) {
+							$image = str_replace('ossnwall/images/', '', $post->{'file:wallphoto'});
+					} else {
+							$image = '';
+					}
+					$user = ossn_user_by_guid($post->poster_guid);
+					$reactions=array();
+					if($post->access == OSSN_FRIENDS) {
+							if (ossn_is_hook('post', 'likes')) {
+								$reactions = ossn_call_hook('post', 'likes', $post);
+							}
+							if (ossn_is_hook('post', 'comments')) {
+								$comments = json_decode(json_encode($comments->GetComments($object)),true);
+								foreach ($comments as $i => $comment) {
+									$poster = ossn_user_by_guid($comment['owner_guid']);
+									$comments[$i]['user_icons'] = $poster->iconURL();
+									$comments[$i]['user_fullname'] = $poster->fullname;
+									$comments[$i]['user_profile'] = $poster->profileurl();
+									if(isset($comment['comments:post'])) {
+										$comments[$i]['text'] = $comment['comments:post'];
+									} else {
+										$comments[$i]['text'] = "";
+									}
+								}
+							}						
+							if(ossn_user_is_friend($post->owner_guid, ossn_loggedin_user()->guid) || ossn_loggedin_user()->guid == $post->owner_guid || ossn_isAdminLoggedin()) {
+								$captured[] = array(
+									'post' => $post,
+									'friends' => explode(',', $data->friend),
+									'text' => $text,
+									'location' => $location,
+									'user' => $user,
+									'image' => $image,
+									'reaction' => $reactions,
+									'comments' => $comments
+								);
+							}
+
+					}
+					if($post->access == OSSN_PUBLIC) {
+							if (ossn_is_hook('post', 'likes')) {
+								$reactions = ossn_call_hook('post', 'likes', $post);
+							}
+							if (ossn_is_hook('post', 'comments')) {
+								$comments = json_decode(json_encode($comments->GetComments($object)),true);
+								foreach ($comments as $i => $comment) {
+									$poster = ossn_user_by_guid($comment['owner_guid']);
+									$comments[$i]['user_icons'] = $poster->iconURL();
+									$comments[$i]['user_fullname'] = $poster->fullname;
+									$comments[$i]['user_profile'] = $poster->profileurl();
+									if(isset($comment['comments:post'])) {
+										$comments[$i]['text'] = $comment['comments:post'];
+									} else {
+										$comments[$i]['text'] = "";
+									}
+								}
+							}	
+
+							$captured[] = array(
+									'post' => $post,
+									'friends' => explode(',', $data->friend),
+									'text' => $text,
+									'location' => $location,
+									'user_fullname' => $user->fullname,
+									'user_icons' => $user->iconURL(),
+									'user_profile' => $user->profileurl(),
+									'image' => $image,
+									'reactions' => $reactions,
+									'comments' => $comments
+							);
+
+					}
+					
+					
+			}
+	}
+	// $captured[] = array("pagination" => ossn_view_pagination($count));
+
+	$posts = json_decode(json_encode($posts),true);
+	
+	echo setReturnArray ("Success", "Finished", $captured);
+	return;
+}														
 if ((input('action') !== null) && (input('action') == 'msgStatus')) {
 
 	if (empty(input('groupid')) || empty(input('msgid')) || empty(input('msgaction'))) {

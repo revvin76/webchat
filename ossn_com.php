@@ -1,5 +1,4 @@
 <?php
-
 define('__WEB_CHAT__', ossn_route()->com . 'webchat/');
 require_once(__WEB_CHAT__ . 'classes/WebChat.php');
 
