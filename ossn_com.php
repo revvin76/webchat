@@ -40,7 +40,7 @@ function web_chat() {
 					'name' => 'webchat',
 					'text' => ossn_print('com:webchat:menu'),
 					'url' => ossn_site_url('webchat'),
-					'section' => 'personal',
+					'section' => 'links',
 					'parent' => 'links',
 					'icon' => $icon
 			));
