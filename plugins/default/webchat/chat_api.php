@@ -237,11 +237,11 @@ if ((input('action') !== null) && (input('action') == 'msgStatus')) {
 	switch ($msgaction) {
 		case 1:
 			if (!$WebChat->markDelivered($groupid, $msgid, ossn_loggedin_user()->guid)) return false;
-			$data['message'] = array("groupid" => $groupid, "msgid" => $msgid, "delivered" => true);
+			$data['message'] = array("groupid" => $groupid, "msgid" => $msgid, "delivered" => true, "userid" => ossn_loggedin_user()->guid);
 			break;
 		case 2:
 			if (!$WebChat->markRead($groupid, $msgid, ossn_loggedin_user()->guid)) return false;
-			$data['message'] = array("groupid" => $groupid, "msgid" => $msgid, "read" => true);
+			$data['message'] = array("groupid" => $groupid, "msgid" => $msgid, "read" => true, "userid" => ossn_loggedin_user()->guid);
 			break;
 	}
 

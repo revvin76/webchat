@@ -1108,6 +1108,9 @@ function wcGetGroups(){
 					channel.bind('messageDeleted', function(data) {
 						pusher_messageDeleted(JSON.stringify(data));
 					});	
+					channel.bind('msgStatus', function(data) {
+						pusher_msgStatus(JSON.stringify(data));
+					});	
 				<!-- } -->
 			});
 		}
@@ -1916,7 +1919,6 @@ function containsEmojis(input, includeBasic) {
 var newmessagesound = new Audio('<?php echo ossn_site_url("components/OssnSounds/audios/pling.mp3"); ?>');
 // Pusher Callback Functions
 function pusher_newMessage(data) {
-	event.preventDefault();
 	if (data != false) {
 		obj = JSON.parse(data);
 		wcMsgStatus(obj.message.groupid, obj.message.id, 1);
@@ -2042,6 +2044,9 @@ function pusher_groupMembership(data) {
 			channel.bind('messageDeleted', function(data) {
 				pusher_messageDeleted(JSON.stringify(data));
 			});	
+			channel.bind('msgStatus', function(data) {
+				pusher_msgStatus(JSON.stringify(data));
+			});	
 		}		
 		else if (obj.message.action == "Removed") {
 			if ($("#activeContact").val() == obj.message.id) {
@@ -2067,6 +2072,9 @@ function pusher_messageDeleted(data) {
 			$("#messages li[data-id='" + obj.message.id + "']").remove();
 		}		
 	}	
+}
+function pusher_msgStatus(data) {
+	console.log ("msgStatus:", data);
 }
 function pln2br (str) { 
     for (i = 0; i < str.length; i++) {
