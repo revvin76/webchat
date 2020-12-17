@@ -32,7 +32,6 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 	<div id="sidepanel">
 		<div id="profile">
 			<!--<div class="wrap">-->
-			<?php 
 			 <button id="homeButton">
 				<i class="fa fa-home fa-fw" aria-hidden="true"></i>
 				<span><?php echo ossn_print('com:webchat:homebutton'); ?></span>
@@ -2104,4 +2103,78 @@ function pln2br (str) {
     return (str);
 }
 
+
+/* OSSN Functions Integration */
+function wcOssnWall(){
+	console.log (friends);
+	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "OssnWall"})
+	 	.fail(function() {
+			location.reload();
+		})
+		.done(function(data) {
+			data = JSON.parse(data);
+			$.each(data[0].payload, function(i,post) {
+				if (i == 'wallcontainer') {
+					$('#newspanel').prepend(post);
+				} else {
+					var newpost = $('.clones .post-container').clone(true,true).appendTo('#newspanel');
+					if (post.post.guid) {
+						$(newpost).attr('data-id',post.post.guid);
+					}
+					$(newpost).find('.profile-img').html("<img src='" + post.user_icons.small + "'></img>");
+					$(newpost).find('.post-content').html('<p>'+post.text+'</p>');
+					
+					if (post.image){
+						var imgurl = "<?php ossn_site_url(''); ?>" + 'post/photo/' + post.post.guid + "/" + post.image;
+						console.log (imgurl + ":" + post.image);
+						$(newpost).find('.post-image').html('<img src="'+ imgurl + '">');
+					} else {
+						$(newpost).find('.post-image').remove();
+					}
+					// $(newpost).find('.post-details').html('post details');
+					$(newpost).find('.post-details .user-name').html("<a href='"+post.user_profile+"' alt='" + post.user_fullname + " profile'>" + post.user_fullname + "</a>");
+					$(newpost).find('.post-details .post-time').html(getnicetime(post.post.time_created));
+
+					//$(newpost).find('.post-menu').html('menu');
+					if (post.reactions) {
+						$(newpost).find('.post-menu').append(post.reactions);
+					}
+					$(newpost).find('.reaction-images').html(':)');
+					$(newpost).find('.reaction-names').html('blah blah and blah commented');
+					$(newpost).find('.reaction-count').html('1 comment');
+					// $(newpost).find('.comments').html('Comments:');
+					if (post.comments) {
+						$.each(post.comments, function(c, comment) {
+							var newcomment = $('.clones .comment-block ').clone(true,true).appendTo($(newpost).find('.comments'));
+							$(newcomment).attr('data-id',comment.id);
+							$(newcomment).find('.comment-img').html("<img src='" + comment.user_icons.smaller + "'></img>");		
+							$(newcomment).find('.comment-content p').html('<span class="comment-name">' + comment.user_fullname + '</span><p>' + comment.text + '</p>');
+							$(newcomment).find('.comment-content .comment-time').html(getnicetime(comment.time_created));
+						});
+					}
+
+					// $(newpost).find('.reply-box').html('reply-box');
+					$(newpost).find('.reply-box .reply-img').html("<img src='" + friends[<?php echo ossn_loggedin_user()->guid; ?>].iconsmaller + "'></img>");
+					$(newpost).find('.reply-box .reply-input').html('<input placeholder="Type a comment"></input>');
+					$(newpost).find('.reply-box .reply-icons').html('icons to click');		
+				}
+			});
+			// $('#newspanel').html(data[0].payload.response);
+		})
+};
+
+function getnicetime (unix_timestamp) {
+	var date = new Date(unix_timestamp * 1000);
+	var hours = date.getHours();
+	var minutes = "0" + date.getMinutes();
+	var seconds = "0" + date.getSeconds();
+	var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+	var year = date.getFullYear();
+	var month = months[date.getMonth()];
+	var day = date.getDate();
+  
+	// Will display time in 10:30:23 format
+	var formattedTime = day + "  " + month + "  " + year + "  " + hours + ':' + minutes.substr(-2);
+	return formattedTime;
+}
 </script>
