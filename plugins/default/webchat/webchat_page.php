@@ -436,6 +436,7 @@ $('#main-input').on('input', function () {
 webchat_root = "<?php echo $path_wcroot; ?>";
 var friends = null;
 var images_path = "<?php echo ossn_site_url('images'); ?>";
+$('#contacts').clone(false,false).after('#sidepanel #profile');
 
 /* PAGE READY */
 $(function() {
@@ -904,7 +905,10 @@ function wcGetFriends(cb = 0, groupid){
 		if (data != false) {
 			friends = JSON.parse(data);
 		}
-		if (cb == 1) wcGetGroups();
+		if (cb == 1) {
+			wcGetGroups();
+			wcOssnWall()
+		}
 		if (cb == 2) wcGetGroupMessages(groupid);
 	 });
 };
