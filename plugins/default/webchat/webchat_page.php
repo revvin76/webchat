@@ -31,7 +31,15 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 	<input id="activeContact" type="number" value="-1" hidden />
 	<div id="sidepanel">
 		<div id="profile">
-			<!--<div class="wrap">-->
+			<?php 
+			  // if ($WebChatSettings->homeButton==1) {
+				  // if ($WebChatSettings->homeURL==1) echo '<a href="' . ossn_site_url($WebChatSettings->homeURLPath) . '" class="button">';
+				  // if ($WebChatSettings->homeButtonStyle==0)echo '<i class="fa ' . $WebChatSettings->homeChar . '"></i>';
+				  // if ($WebChatSettings->homeButtonStyle==1)echo '<img src="' . $WebChatSettings->homeImgPath . '" alt=""/>';
+				  // echo '<span>' . ossn_print('com:webchat:homebutton') . '</span>';
+				  // if ($WebChatSettings->homeURL==1) echo '</a>';				  
+			  // }
+			  ?>
 			 <button id="homeButton">
 				<i class="fa fa-home fa-fw" aria-hidden="true"></i>
 				<span><?php echo ossn_print('com:webchat:homebutton'); ?></span>
@@ -51,23 +59,22 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 			 <button id="accountButton" data-panel='accountpanel' class="option">
 				<span>Account</span>
 			</button>
-			  if ($WebChatSettings->homeButton==1) {
-				  if ($WebChatSettings->homeURL==1) echo '<a href="' . ossn_site_url($WebChatSettings->homeURLPath) . '" class="button">';
-				  
-				  if ($WebChatSettings->homeButtonStyle==0)echo '<i class="fa ' . $WebChatSettings->homeChar . '"></i>';
-				  
-				  if ($WebChatSettings->homeButtonStyle==1)echo '<img src="' . $WebChatSettings->homeImgPath . '" alt=""/>';
-				  
-				  echo '<span>' . ossn_print('com:webchat:homebutton') . '</span>';
-				  
-				  if ($WebChatSettings->homeURL==1) echo '</a>';
-				  
-			  }?>
 		</div>
-		<div id="contacts">
-			<ul>
-			</ul>
-		</div>
+			<div id="contacts" class="activepanel">
+				<ul>
+				</ul>
+			</div>
+			<div id="newspanel">
+			</div>
+			<div id="profilepanel">
+				<p>this is where profile will go</p>
+			</div>
+			<div id="searchpanel">
+				<p>this is where search will go</p>
+			</div>
+			<div id="accountpanel">
+				<p>this is where account will go</p>
+			</div>
 		<div id="bottom-bar">
 			<button id="addChat">
 				<i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>
@@ -214,19 +221,6 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 					<p class="sitename"></p>
 				</span>
 			</div>
-			<!-- <div class="media-options"> -->
-				<!-- <i class="fa fa-video-camera" aria-hidden="true"></i> -->
-				<!-- <i class="fa fa-phone" aria-hidden="true"></i> -->
-				<!-- <i class="fa fa-ellipsis-v message-menu" aria-hidden="true"></i> -->
-				<!-- <div id="message-menu" class="dropdown-content"> -->
-					<!-- <ul> -->
-					<!-- <li id="view-user-btn">View User Details</li> -->
-					<!-- <li id="report-user-btn">Report User</li> -->
-					<!-- <li id="block-user-btn">Block User</li> -->
-					<!-- <li id="clear-chat-btn">Clear Chat</li> -->
-					<!-- </ul> -->
-				<!-- </div> -->
-			<!-- </div> -->
 			<button class="siteappinstaller-install-button" >
 				<i class="fa fa-download fa-fw\" aria-hidden="true"></i>
 				<span><?php echo ossn_print('com:webchat:account_settings_section_button'); ?></span>
@@ -250,6 +244,33 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 					</span>
 				</ul>
 			</div>
+			<div class="post-container">
+			  <div class="profile-img"></div>
+			  <div class="post-content"></div>
+			  <div class="post-image"></div>
+			  <div class="post-details">
+				<div class="user-name"></div>
+				<div class="post-time"></div>
+			  </div>
+			  <div class="post-menu">
+				<!--<i class="fa fa-ellipsis-v post-menu-btn" aria-hidden="true"></i>-->
+			  </div>
+			  <div class="comments">
+			  </div>
+			  <div class="reply-box">
+				<div class="reply-img"></div>
+				<div class="reply-input"></div>
+			  </div>
+			  <div class="reaction-block">
+				<div class="reaction-img"></div>
+				<div class="reaction-names"></div>
+				<div class="reaction-count"></div>
+			  </div>
+			</div>
+				<div class="comment-block">
+				  <div class="comment-content"><span class="comment-time"></span><p></p></div>
+				  <div class="comment-img"></div>
+				</div>
 </div>
 <div class="cd-popup" role="alert">
    <div class="cd-popup-container">
@@ -1518,7 +1539,7 @@ function wcNewMessage(type = 0, giphyImg = null, giphyBig = null, infoMsg = null
 					  message: message,
 					  status: type
 					});
-					$('#main-input').val(null).blur();
+					// $('#main-input').val(null).blur();
 					$('#main-input').css("height","15px");
 					$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
 					$("#frame .content .message-input .wrap .fa").css("bottom","-32px");				
@@ -1538,9 +1559,7 @@ function wcNewMessage(type = 0, giphyImg = null, giphyBig = null, infoMsg = null
 
 	if (type != 3) {
 		// Now we've sent the message, reset the size of the input box, icon locations and empty the input box.
-		if (type != 1) {
-			$('#main-input').val(null).blur();
-		}
+		if (type == 0) $('#main-input').val(null).blur();
 		$('#main-input').css("height","15px");
 		$("#frame .content .message-input .wrap i").css("padding-top",miniHeight + "px");
 		$("#frame .content .message-input .wrap .fa").css("bottom","-32px");
