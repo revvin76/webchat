@@ -33,6 +33,25 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 		<div id="profile">
 			<!--<div class="wrap">-->
 			<?php 
+			 <button id="homeButton">
+				<i class="fa fa-home fa-fw" aria-hidden="true"></i>
+				<span><?php echo ossn_print('com:webchat:homebutton'); ?></span>
+			</button>
+			 <button id="chatButton" data-panel='contacts' class="option active">
+				<span>Chats</span>
+			</button>
+			 <button id="newsButton" data-panel='newspanel' class="option">
+				<span>Newsfeed</span>
+			</button>
+			 <button id="profileButton" data-panel='profilepanel' class="option">
+				<span>Profile</span>
+			</button>
+			 <button id="searchButton" data-panel='searchpanel' class="option">
+				<span>Search</span>
+			</button>
+			 <button id="accountButton" data-panel='accountpanel' class="option">
+				<span>Account</span>
+			</button>
 			  if ($WebChatSettings->homeButton==1) {
 				  if ($WebChatSettings->homeURL==1) echo '<a href="' . ossn_site_url($WebChatSettings->homeURLPath) . '" class="button">';
 				  
