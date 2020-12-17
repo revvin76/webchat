@@ -677,6 +677,20 @@ $('li.contact').click(function() {																			// Click a contact to open 
 	  $("#frame .content").addClass("onFromRight");
   });
 });
+$('#profile button.option').click(function() {																// Click a menu button
+	var currentid = $('#sidepanel').find('.activepanel').attr('id');
+	var newpanel = $('#' + $(this).attr('data-panel'));
+	$('#profile button').removeClass('active');
+	$(this).addClass('active');
+	$('#'+ currentid).fadeOut();
+	$('#'+ currentid).removeClass('activepanel');	
+	$('#'+ currentid).promise().done(function(){
+		$(newpanel).fadeIn();
+		$(newpanel).addClass('activepanel');
+	});
+	// console.log (currentid);
+	// if ($(this).attr('id') == 'newsButton') wcOssnWall();
+});
 
 /* CALLBACKS */
 
