@@ -199,7 +199,10 @@ body {
     display: none;
   }
 } 
-#frame #sidepanel #newspanel {
+#frame #sidepanel .activepanel {
+	display:block;
+}
+#frame #sidepanel #homepanel {
 	display:none;
 	color: var(--main-font-color-dark-on-light);
 	height: calc(100vh - 60px);
@@ -209,10 +212,10 @@ body {
 	background-color: var(--main-bg-color-light-blue-wall);
 }
 /* wcWall */
-#frame #sidepanel #newspanel .post-container:first-child {
+#frame #sidepanel #homepanel .post-container:first-child {
 	margin: 0.7vh 0.7vw 2vh 0.7vw;
 }
-#frame #sidepanel #newspanel .post-container {
+#frame #sidepanel #homepanel .post-container {
 	padding: 1vw;
 	margin: 2vh 0.7vw;
 	background-color: var(--main-bg-color-white);
@@ -233,15 +236,15 @@ body {
     "reply-box reply-box reply-box";
 	box-shadow: 0 1px 2px var(--main-bg-color-faded-light);
 }
-#frame #sidepanel #newspanel .post-container .profile-img {
+#frame #sidepanel #homepanel .post-container .profile-img {
 	grid-area: profile-img;
 	margin: auto;
 	contain: content;
 }
-#frame #sidepanel #newspanel .post-container .profile-img img {
+#frame #sidepanel #homepanel .post-container .profile-img img {
     border-radius: var(--main-border-radius);
 }
-#frame #sidepanel #newspanel .post-container .post-content {
+#frame #sidepanel #homepanel .post-container .post-content {
 	grid-area: post-content;
 	overflow-y: scroll;
 	overflow: hidden;
@@ -253,12 +256,12 @@ body {
 	padding: 1vh 0;
 	border-top: solid 1px var(--main-bg-color-faded-light);	
 }
-#frame #sidepanel #newspanel .post-container .post-image { grid-area: post-image; }
-#frame #sidepanel #newspanel .post-container .post-image img {
+#frame #sidepanel #homepanel .post-container .post-image { grid-area: post-image; }
+#frame #sidepanel #homepanel .post-container .post-image img {
 	width: 100%;
 	object-fit: cover;
 }
-#frame #sidepanel #newspanel .post-container .post-details {
+#frame #sidepanel #homepanel .post-container .post-details {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 2em 2em;
@@ -268,7 +271,7 @@ body {
     "post-time";
   grid-area: post-details;
 }
-#frame #sidepanel #newspanel .post-container .user-name {
+#frame #sidepanel #homepanel .post-container .user-name {
 	grid-area: user-name;
 	margin: auto auto auto 1vw;
 	font-weight: var(--main-font-weight-bold);
@@ -276,10 +279,10 @@ body {
 	line-height: var(--main-font-size-bigger-lh);
 	text-align: left;
 }
-#frame #sidepanel #newspanel .post-container .user-name a {
+#frame #sidepanel #homepanel .post-container .user-name a {
 	text-decoration: none;
 }
-#frame #sidepanel #newspanel .post-container .post-time {
+#frame #sidepanel #homepanel .post-container .post-time {
 	grid-area: post-time;
     margin: 0 auto auto 1vw;
     font-size: var(--main-font-size-heading);
@@ -288,16 +291,16 @@ body {
     text-align: left;
     font-weight: var(--main-font-weight-thin);
 }
-#frame #sidepanel #newspanel .post-container .post-menu { grid-area: post-menu; }
+#frame #sidepanel #homepanel .post-container .post-menu { grid-area: post-menu; }
 
-#frame #sidepanel #newspanel .post-container .post-menu i {
+#frame #sidepanel #homepanel .post-container .post-menu i {
 	font-weight: var(--main-font-weight-thin);
     font-size: var(--main-font-size-icons);
 	line-height: var(--main-font-size-icons-lh);
 	padding-top: calc(50% - 1em);
 }
 
-#frame #sidepanel #newspanel .post-container .reaction-block {
+#frame #sidepanel #homepanel .post-container .reaction-block {
   display: grid;
   grid-template-columns: auto 4fr 1fr;
   grid-template-rows: 1fr;
@@ -306,11 +309,11 @@ body {
     "reaction-img reaction-names reaction-count";
   grid-area: reaction-block;
 }
-#frame #sidepanel #newspanel .post-container .reaction-img { 
+#frame #sidepanel #homepanel .post-container .reaction-img { 
 	grid-area: reaction-img;
 	margin: auto 0;	
 }
-#frame #sidepanel #newspanel .post-container .reaction-names {
+#frame #sidepanel #homepanel .post-container .reaction-names {
 	grid-area: reaction-names;
 	font-weight: var(--main-font-weight-thin);
     font-size: var(--main-font-size-heading);
@@ -318,7 +321,7 @@ body {
     margin: auto 0;
     text-align: left;
 }
-#frame #sidepanel #newspanel .post-container .reaction-count {
+#frame #sidepanel #homepanel .post-container .reaction-count {
 	grid-area: reaction-count;
 	text-align: right;
 	font-weight: var(--main-font-weight-thin);
@@ -327,7 +330,7 @@ body {
 	margin: auto 0;	
 }
 
-#frame #sidepanel #newspanel .post-container .comments {
+#frame #sidepanel #homepanel .post-container .comments {
 display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
@@ -340,7 +343,7 @@ display: grid;
   border-right: 0;
   padding: 1vh 0;  
 }
-#frame #sidepanel #newspanel .post-container .comments .comment-block {
+#frame #sidepanel #homepanel .post-container .comments .comment-block {
   display: grid;
   grid-template-columns: 32px 1fr;
   grid-template-rows: 1fr;
@@ -349,15 +352,15 @@ display: grid;
     "comment-img comment-content";
   margin-top: 1vh;	
 }
-#frame #sidepanel #newspanel .post-container .comments .comment-block .comment-img {
+#frame #sidepanel #homepanel .post-container .comments .comment-block .comment-img {
 	grid-area: comment-img;
 	margin: auto;
 	contain: content;
 }
-#frame #sidepanel #newspanel .post-container .comments .comment-block .comment-img img {
+#frame #sidepanel #homepanel .post-container .comments .comment-block .comment-img img {
 	border-radius: 50%;
 }
-#frame #sidepanel #newspanel .post-container .comments .comment-block .comment-content {
+#frame #sidepanel #homepanel .post-container .comments .comment-block .comment-content {
 	grid-area: comment-content;
 	background-color: var(--main-bg-color-light);
     border-radius: var(--main-border-radius);
@@ -366,7 +369,7 @@ display: grid;
 	font-weight: var(--main-font-weight-thin);	
 	position: relative;
 }
-#frame #sidepanel #newspanel .post-container .comments .comment-block .comment-content .comment-time {
+#frame #sidepanel #homepanel .post-container .comments .comment-block .comment-content .comment-time {
 	position: absolute;
     right: 2vw;
     top: 1vh;
@@ -374,20 +377,20 @@ display: grid;
     line-height: var(--main-font-size-normal-lh);
     font-weight: var(--main-font-weight-thin);
 }
-#frame #sidepanel #newspanel .post-container .comments .comment-block .comment-content p {
+#frame #sidepanel #homepanel .post-container .comments .comment-block .comment-content p {
 	text-align: left;
     display: block;
     font-size: var(--main-font-size-heading);
 	line-height: var(--main-font-size-heading-lh);	
 }
-#frame #sidepanel #newspanel .post-container .comments .comment-block .comment-content span.comment-name {
+#frame #sidepanel #homepanel .post-container .comments .comment-block .comment-content span.comment-name {
 	text-align: left;
     display: block;
     font-size: var(--main-font-size-heading);
 	line-height: var(--main-font-size-heading-lh);
     font-weight: var(--main-font-weight-bold);	
 }
-#frame #sidepanel #newspanel .post-container .reply-box {
+#frame #sidepanel #homepanel .post-container .reply-box {
   display: grid;
   grid-template-columns: 32px 1fr;
   grid-template-rows: 32px;
@@ -396,14 +399,14 @@ display: grid;
     "reply-img reply-input reply-icons";
   grid-area: reply-box;
 }
-#frame #sidepanel #newspanel .post-container .reply-img {
+#frame #sidepanel #homepanel .post-container .reply-img {
 	grid-area: reply-img;
 	contain: content;
 }
-#frame #sidepanel #newspanel .post-container .reply-img img {
+#frame #sidepanel #homepanel .post-container .reply-img img {
 	border-radius: 50%;
 }
-#frame #sidepanel #newspanel .post-container .reply-input {
+#frame #sidepanel #homepanel .post-container .reply-input {
 	grid-area: reply-input;
     position: relative;
     background-color: var(--main-bg-color-light);
@@ -411,14 +414,14 @@ display: grid;
     margin-left: 2vw;
     padding-left: 2vw;
 }
-#frame #sidepanel #newspanel .post-container .reply-input input {
+#frame #sidepanel #homepanel .post-container .reply-input input {
 	background-color: var(--main-bg-color-light);
     border: none;
     border-radius: var(--main-border-radius);
 	height: calc(100% - 0.5vh);
 	width: calc(100% - 2vw);
 }
-#frame #sidepanel #newspanel .post-container .reply-icons { grid-area: reply-icons; }
+#frame #sidepanel #homepanel .post-container .reply-icons { grid-area: reply-icons; }
 #frame #sidepanel #profilepanel {
 	background-color: var(--main-bg-color-light);
 	color: var(--main-font-color-dark-on-light);
@@ -439,6 +442,7 @@ display: grid;
 }
 
  #frame #sidepanel #contacts {
+	 display:none;
   height: calc(100vh - 60px);
   overflow-y: scroll;
   overflow-x: hidden;

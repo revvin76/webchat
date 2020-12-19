@@ -40,15 +40,12 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 				  // if ($WebChatSettings->homeURL==1) echo '</a>';				  
 			  // }
 			  ?>
-			 <button id="homeButton">
+			 <button id="homeButton" data-panel='homepanel' class="option active">
 				<i class="fa fa-home fa-fw" aria-hidden="true"></i>
 				<span><?php echo ossn_print('com:webchat:homebutton'); ?></span>
 			</button>
-			 <button id="chatButton" data-panel='contacts' class="option active">
+			 <button id="chatButton" data-panel='contacts' class="option">
 				<span>Chats</span>
-			</button>
-			 <button id="newsButton" data-panel='newspanel' class="option">
-				<span>Newsfeed</span>
 			</button>
 			 <button id="profileButton" data-panel='profilepanel' class="option">
 				<span>Profile</span>
@@ -60,21 +57,13 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 				<span>Account</span>
 			</button>
 		</div>
-			<div id="contacts" class="activepanel">
-				<ul>
-				</ul>
-			</div>
-			<div id="newspanel">
-			</div>
-			<div id="profilepanel">
-				<p>this is where profile will go</p>
-			</div>
-			<div id="searchpanel">
-				<p>this is where search will go</p>
-			</div>
-			<div id="accountpanel">
-				<p>this is where account will go</p>
-			</div>
+		
+		<div id="homepanel" class="activepanel"></div>		
+		<div id="contacts"><ul></ul></div>
+		<div id="profilepanel"><p>this is where profile will go</p></div>
+		<div id="searchpanel"><p>this is where search will go</p></div>
+		<div id="accountpanel"><p>this is where account will go</p></div>
+		
 		<div id="bottom-bar">
 			<button id="addChat">
 				<i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>
@@ -468,6 +457,7 @@ $(function() {
 	});	
 	wcWelcome();
 	wcGetFriends(1);
+	$('#sidepanel #homepanel').fadeIn();
 });
 
 /* CLICK EVENTS */
@@ -710,7 +700,7 @@ $('#profile button.option').click(function() {																// Click a menu bu
 		$(newpanel).addClass('activepanel');
 	});
 	// console.log (currentid);
-	// if ($(this).attr('id') == 'newsButton') wcOssnWall();
+	if ($(this).attr('id') == 'homeButton') wcOssnWall();
 });
 
 /* CALLBACKS */
@@ -2143,7 +2133,6 @@ function pln2br (str) {
 
 /* OSSN Functions Integration */
 function wcOssnWall(){
-	console.log (friends);
 	$.post( "<?php echo ossn_site_url('chat_api'); ?>" + tokenurl, { action: "OssnWall"})
 	 	.fail(function() {
 			location.reload();
@@ -2152,9 +2141,9 @@ function wcOssnWall(){
 			data = JSON.parse(data);
 			$.each(data[0].payload, function(i,post) {
 				if (i == 'wallcontainer') {
-					$('#newspanel').prepend(post);
+					$('#homepanel').prepend(post);
 				} else {
-					var newpost = $('.clones .post-container').clone(true,true).appendTo('#newspanel');
+					var newpost = $('.clones .post-container').clone(true,true).appendTo('#homepanel');
 					if (post.post.guid) {
 						$(newpost).attr('data-id',post.post.guid);
 					}
