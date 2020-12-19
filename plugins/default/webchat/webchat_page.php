@@ -700,7 +700,7 @@ $('#profile button.option').click(function() {																// Click a menu bu
 		$(newpanel).addClass('activepanel');
 	});
 	// console.log (currentid);
-	if ($(this).attr('id') == 'homeButton') wcOssnWall();
+	//if ($(this).attr('id') == 'homeButton') wcOssnWall();
 });
 
 /* CALLBACKS */
@@ -2151,7 +2151,7 @@ function wcOssnWall(){
 					$(newpost).find('.post-content').html('<p>'+post.text+'</p>');
 					
 					if (post.image){
-						var imgurl = "<?php ossn_site_url(''); ?>" + 'post/photo/' + post.post.guid + "/" + post.image;
+						var imgurl = "<?php echo ossn_site_url(''); ?>" + 'post/photo/' + post.post.guid + "/" + post.image;
 						console.log (imgurl + ":" + post.image);
 						$(newpost).find('.post-image').html('<img src="'+ imgurl + '">');
 					} else {

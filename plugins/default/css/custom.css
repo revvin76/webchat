@@ -199,9 +199,6 @@ body {
     display: none;
   }
 } 
-#frame #sidepanel .activepanel {
-	display:block;
-}
 #frame #sidepanel #homepanel {
 	display:none;
 	color: var(--main-font-color-dark-on-light);
