@@ -114,108 +114,111 @@ if ((input('action') !== null) && (input('action') == 'OssnWall')) {
 	}
 	$content .= '<div class="user-activity">';
 	if($posts) {
-			foreach($posts as $post) {
-				$object = $post->guid;
-				$comments = new OssnComments;
-				if($post->full_view !== true){
-					$comments->limit = 5;
-				}
-				if($post->full_view == true){
-					$comments->limit = false;
-					$comments->page_limit = false;
-				}
-			
-				
-				
-					$data     = json_decode(html_entity_decode($post->description));
-					if(!is_object($data)){
-						$data = new stdClass;
-					}
-				
-					// $text     = ossn_restore_new_lines($data->post, true);
-					$text     = $data->post;
-					$location = '';
-					if(isset($data->location)) {
-							$location = '- ' . $data->location;
-					}
-					if(!isset($data->friend)) {
-							$data->friend = '';
-					}
-					if(isset($post->{'file:wallphoto'})) {
-							$image = str_replace('ossnwall/images/', '', $post->{'file:wallphoto'});
-					} else {
-							$image = '';
-					}
-					$user = ossn_user_by_guid($post->poster_guid);
-					$reactions=array();
-					if($post->access == OSSN_FRIENDS) {
-							if (ossn_is_hook('post', 'likes')) {
-								$reactions = ossn_call_hook('post', 'likes', $post);
-							}
-							if (ossn_is_hook('post', 'comments')) {
-								$comments = json_decode(json_encode($comments->GetComments($object)),true);
-								foreach ($comments as $i => $comment) {
-									$poster = ossn_user_by_guid($comment['owner_guid']);
-									$comments[$i]['user_icons'] = $poster->iconURL();
-									$comments[$i]['user_fullname'] = $poster->fullname;
-									$comments[$i]['user_profile'] = $poster->profileurl();
-									if(isset($comment['comments:post'])) {
-										$comments[$i]['text'] = $comment['comments:post'];
-									} else {
-										$comments[$i]['text'] = "";
-									}
-								}
-							}						
-							if(ossn_user_is_friend($post->owner_guid, ossn_loggedin_user()->guid) || ossn_loggedin_user()->guid == $post->owner_guid || ossn_isAdminLoggedin()) {
-								$captured[] = array(
-									'post' => $post,
-									'friends' => explode(',', $data->friend),
-									'text' => $text,
-									'location' => $location,
-									'user' => $user,
-									'image' => $image,
-									'reaction' => $reactions,
-									'comments' => $comments
-								);
-							}
-
-					}
-					if($post->access == OSSN_PUBLIC) {
-							if (ossn_is_hook('post', 'likes')) {
-								$reactions = ossn_call_hook('post', 'likes', $post);
-							}
-							if (ossn_is_hook('post', 'comments')) {
-								$comments = json_decode(json_encode($comments->GetComments($object)),true);
-								foreach ($comments as $i => $comment) {
-									$poster = ossn_user_by_guid($comment['owner_guid']);
-									$comments[$i]['user_icons'] = $poster->iconURL();
-									$comments[$i]['user_fullname'] = $poster->fullname;
-									$comments[$i]['user_profile'] = $poster->profileurl();
-									if(isset($comment['comments:post'])) {
-										$comments[$i]['text'] = $comment['comments:post'];
-									} else {
-										$comments[$i]['text'] = "";
-									}
-								}
-							}	
-
-							$captured[] = array(
-									'post' => $post,
-									'friends' => explode(',', $data->friend),
-									'text' => $text,
-									'location' => $location,
-									'user_fullname' => $user->fullname,
-									'user_icons' => $user->iconURL(),
-									'user_profile' => $user->profileurl(),
-									'image' => $image,
-									'reactions' => $reactions,
-									'comments' => $comments
-							);
-
-					}
-					
-					
+		foreach($posts as $post) {
+			$object = $post->guid;
+			$comments = new OssnComments;
+			if($post->full_view !== true){
+				$comments->limit = 5;
 			}
+			if($post->full_view == true){
+				$comments->limit = false;
+				$comments->page_limit = false;
+			}
+		
+			
+		
+			$data     = json_decode(html_entity_decode($post->description));
+			if(!is_object($data)){
+				$data = new stdClass;
+			}
+		
+			// $text     = ossn_restore_new_lines($data->post, true);
+			$text     = $data->post;
+			$location = '';
+			if(isset($data->location)) {
+					$location = '- ' . $data->location;
+			}
+			if(!isset($data->friend)) {
+					$data->friend = '';
+			}
+			if(isset($post->{'file:wallphoto'})) {
+					$image = str_replace('ossnwall/images/', '', $post->{'file:wallphoto'});
+			} else {
+					$image = '';
+			}
+			$user = ossn_user_by_guid($post->poster_guid);
+			if($post->access == OSSN_FRIENDS) {
+				if (ossn_is_hook('post', 'likes')) {
+					$reactions = json_decode(json_encode(getLikes($object)),true);
+				}
+				if (ossn_is_hook('post', 'comments')) {
+					$comments = json_decode(json_encode($comments->GetComments($object)),true);
+					if ($comments) {
+						$commentcount = count ($comments);
+						foreach ($comments as $i => $comment) {
+							$poster = ossn_user_by_guid($comment['owner_guid']);
+							$comments[$i]['user_icons'] = $poster->iconURL();
+							$comments[$i]['user_fullname'] = $poster->fullname;
+							$comments[$i]['user_profile'] = $poster->profileurl();
+							if(isset($comment['comments:post'])) {
+								$comments[$i]['text'] = $comment['comments:post'];
+							} else {
+								$comments[$i]['text'] = "";
+							}
+						}
+					}
+				}						
+				if(ossn_user_is_friend($post->owner_guid, ossn_loggedin_user()->guid) || ossn_loggedin_user()->guid == $post->owner_guid || ossn_isAdminLoggedin()) {
+					$captured[] = array(
+						'post' => $post,
+						'friends' => explode(',', $data->friend),
+						'text' => $text,
+						'location' => $location,
+						'user' => $user,
+						'image' => $image,
+						'reactions' => $reactions,
+						'comments' => $comments,
+						'comment_count' => $commentcount
+					);
+				}
+
+			}
+			if($post->access == OSSN_PUBLIC) {
+				if (ossn_is_hook('post', 'likes')) {
+					$reactions = json_decode(json_encode(getLikes($object)),true);
+				}
+				if (ossn_is_hook('post', 'comments')) {
+					$comments = json_decode(json_encode($comments->GetComments($object)),true);
+					if ($comments){
+						$commentcount = count ($comments);
+						foreach ($comments as $i => $comment) {
+							$poster = ossn_user_by_guid($comment['owner_guid']);
+							$comments[$i]['user_icons'] = $poster->iconURL();
+							$comments[$i]['user_fullname'] = $poster->fullname;
+							$comments[$i]['user_profile'] = $poster->profileurl();
+							if(isset($comment['comments:post'])) {
+								$comments[$i]['text'] = $comment['comments:post'];
+							} else {
+								$comments[$i]['text'] = "";
+							}
+						}
+					}
+				}	
+				$captured[] = array(
+					'post' => $post,
+					'friends' => explode(',', $data->friend),
+					'text' => $text,
+					'location' => $location,
+					'user_fullname' => $user->fullname,
+					'user_icons' => $user->iconURL(),
+					'user_profile' => $user->profileurl(),
+					'image' => $image,
+					'reactions' => $reactions,
+					'comments' => $comments,
+					'comment_count' => $commentcount
+				);
+			}	
+		}
 	}
 	// $captured[] = array("pagination" => ossn_view_pagination($count));
 
@@ -1279,7 +1282,55 @@ function urlPreviewThumb($source_url, $type) {
 	}
 	return false;
 }
+function getLikes ($object){
+	$OssnLikes = new OssnLikes;
+	
+	$user_liked = '';
+	if (ossn_isLoggedIn()) { 
+				if ($OssnLikes->isLiked($object, ossn_loggedin_user()->guid)) {
+					$user_liked = true;
+				}
+	}
+	/* Likes and comments don't show for nonlogged in users */ 
+	if ($OssnLikes->CountLikes($object)) {
+		$reactions = array();
+		$count = $OssnLikes->CountLikes($object);
+		$reactions ['count'] = $count;
+		
+		foreach($OssnLikes->__likes_get_all as $item){
+			$last_three_icons[$item->subtype] = $item->subtype;
+		}
+		$reactions['last_three'] = array_slice($last_three_icons, -3);
 
+		if ($user_liked == true && $count == 1) {
+			$reactions['description'] = ossn_print("ossn:liked:you");
+		}
+		elseif ($user_liked == true && $count > 1) {
+			$count = $count - 1;
+			$total = 'person';
+			if ($count > 1) {
+				$total = 'people';
+			}
+			$link['onclick'] = "Ossn.ViewLikes({$object});";
+			$link['href'] = 'javascript:void(0);';
+			$link['text'] = ossn_print("ossn:like:{$total}", array($count));
+			$link = ossn_plugin_view('output/url', $link);
+			$reactions['description'] =ossn_print("ossn:like:you:and:this", array($link));
+		} elseif (!$user_liked) {
+			$total = 'person';
+			if ($count > 1) {
+				$total = 'people';
+			}
+			$link['onclick'] = "Ossn.ViewLikes({$object});";
+			$link['href'] = 'javascript:void(0);';
+			$link['text'] = ossn_print("ossn:like:{$total}", array($count));
+			$link = ossn_plugin_view('output/url', $link);
+			$reactions['description'] =ossn_print("ossn:like:this", array($link));
+		}
+		return $reactions;
+	}
+	return false;
+}
 function checkImageDims($source_url, $extension) {
     #Create a new image from file or URL
 	if ($extension == '.jpg' || $extension == '.jpeg' || $extension == '.JPG' || $extension == '.JPEG') {

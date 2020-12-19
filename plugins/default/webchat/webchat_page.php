@@ -253,7 +253,7 @@ echo ("<script> var tokenurl = ('?ossn_ts=".json_encode($token['ossn_ts'])."&oss
 			  <div class="reaction-block">
 				<div class="reaction-img"></div>
 				<div class="reaction-names"></div>
-				<div class="reaction-count"></div>
+				<div class="comment-count"></div>
 			  </div>
 			</div>
 				<div class="comment-block">
@@ -2163,11 +2163,15 @@ function wcOssnWall(){
 
 					//$(newpost).find('.post-menu').html('menu');
 					if (post.reactions) {
-						$(newpost).find('.post-menu').append(post.reactions);
+						//$(newpost).find('.post-menu').append(post.reactions);
+						$.each(post.reactions.last_three, function (e, emoji) {
+							console.log (e, emoji);
+							$(newpost).find('.reaction-img').append('<img src="<?php echo ossn_site_url("components/webchat/plugins/default/img/reactions/"); ?>' + emoji + '.png" alt="' + emoji + '">');
+						});
+						$(newpost).find('.reaction-names').html(post.reactions.description);
+						//$(newpost).find('.comment-count').html(post.reactions.count);
 					}
-					$(newpost).find('.reaction-images').html(':)');
-					$(newpost).find('.reaction-names').html('blah blah and blah commented');
-					$(newpost).find('.reaction-count').html('1 comment');
+
 					// $(newpost).find('.comments').html('Comments:');
 					if (post.comments) {
 						$.each(post.comments, function(c, comment) {
@@ -2176,6 +2180,12 @@ function wcOssnWall(){
 							$(newcomment).find('.comment-img').html("<img src='" + comment.user_icons.smaller + "'></img>");		
 							$(newcomment).find('.comment-content p').html('<span class="comment-name">' + comment.user_fullname + '</span><p>' + comment.text + '</p>');
 							$(newcomment).find('.comment-content .comment-time').html(getnicetime(comment.time_created));
+							if (post.comment_count == 1) {
+								$(newpost).find('.comment-count').html('1 comment');
+							}
+							else {
+								$(newpost).find('.comment-count').html(post.comment_count + ' comments');
+							}
 						});
 					}
 

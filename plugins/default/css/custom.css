@@ -309,6 +309,11 @@ body {
 #frame #sidepanel #homepanel .post-container .reaction-img { 
 	grid-area: reaction-img;
 	margin: auto 0;	
+	display:contents;
+}
+#frame #sidepanel #homepanel .post-container .reaction-img img { 
+	margin-right:1vw;
+	height: 100%;
 }
 #frame #sidepanel #homepanel .post-container .reaction-names {
 	grid-area: reaction-names;
@@ -318,7 +323,7 @@ body {
     margin: auto 0;
     text-align: left;
 }
-#frame #sidepanel #homepanel .post-container .reaction-count {
+#frame #sidepanel #homepanel .post-container .comment-count {
 	grid-area: reaction-count;
 	text-align: right;
 	font-weight: var(--main-font-weight-thin);
@@ -1843,4 +1848,3 @@ section.message.im {
 	padding: 0.3em 0;
 }
 /****************************************************************************** END TEST PHOTO *//
-
