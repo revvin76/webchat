@@ -7,17 +7,17 @@
  /**
   * Set default values for all variables
   */
-$giphyAPIKey 	= 'Please obtain an API Key from https://developers.giphy.com';
+$giphyAPIKey 	= 'fAUhpwQWQbchOfSJQzmwkl4fokgIJA3G';
 $homeChar 	 	= 'fa-home';
 $homeButton  	= '1';
 $homeURL	 	= '/home';
 $homeButtonStyle  	= '1';
 $homeURLPath    	= 'home';
 $homeImgPath    	= '';
-$pusher_app_id		= 'pusher_app_id';
-$pusher_key			= 'pusher_key';
-$pusher_secret		= 'pusher_secret';
-$pusher_cluster		= 'pusher_cluster';
+$pusher_app_id		= '1326868';
+$pusher_key			= 'ad4284d25e3fe6b152ea';
+$pusher_secret		= '3d1642e97329e6cc3f20';
+$pusher_cluster		= 'sa1';
 $redirecttowc		= false;
 $addlink			= false;
 
